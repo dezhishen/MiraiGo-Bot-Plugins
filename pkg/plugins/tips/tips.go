@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -79,7 +80,18 @@ func (t Tips) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageR
 		}
 	}
 	everyDay := len(params) > 4 && params[4] == "Y"
-	tipTime, err := time.Parse(timestr, "03:00")
+	hAndM := strings.Split(timestr, ":")
+	if len(hAndM) != 2 {
+		return nil, errors.New("错误的时间格式")
+	}
+	hour, err := strconv.Atoi(hAndM[0])
+	if err != nil {
+		return nil, errors.New("错误的时间格式")
+	}
+	min, err := strconv.Atoi(hAndM[1])
+	if err != nil {
+		return nil, errors.New("错误的时间格式")
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -88,8 +100,8 @@ func (t Tips) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageR
 		Content:   content,
 		SendType:  sendType,
 		SenderUID: request.Sender.Uin,
-		Hour:      tipTime.Hour(),
-		Minute:    tipTime.Hour(),
+		Hour:      hour,
+		Minute:    min,
 		EveryDay:  everyDay,
 	}
 	jsonBytes, _ := json.Marshal(info)
