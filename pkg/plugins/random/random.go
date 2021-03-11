@@ -1,4 +1,4 @@
-package plugins
+package random
 
 import (
 	"fmt"
@@ -9,19 +9,15 @@ import (
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/plugins"
 )
 
-// Random Random插件
-type Random struct {
-}
-
-// RandomPlugin Random插件
-type RandomPlugin struct {
+// Plugin Random插件
+type Plugin struct {
 	plugins.NoSortPlugin
 	plugins.NoInitPlugin
 	plugins.AlwaysNotFireNextEventPlugin
 }
 
 // PluginInfo PluginInfo
-func (w RandomPlugin) PluginInfo() *plugins.PluginInfo {
+func (w Plugin) PluginInfo() *plugins.PluginInfo {
 	return &plugins.PluginInfo{
 		ID:   "Random",
 		Name: "Random插件",
@@ -29,7 +25,7 @@ func (w RandomPlugin) PluginInfo() *plugins.PluginInfo {
 }
 
 // IsFireEvent 是否出发
-func (w RandomPlugin) IsFireEvent(msg *plugins.MessageRequest) bool {
+func (w Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 	if len(msg.Elements) == 1 && msg.Elements[0].Type() == message.Text {
 		v := msg.Elements[0]
 		field, ok := v.(*message.TextElement)
@@ -39,7 +35,7 @@ func (w RandomPlugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 }
 
 // OnMessageEvent OnMessageEvent
-func (w RandomPlugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageResponse, error) {
+func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageResponse, error) {
 	result := &plugins.MessageResponse{
 		Elements: make([]message.IMessageElement, 1),
 	}
@@ -54,5 +50,5 @@ func (w RandomPlugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.
 }
 
 func init() {
-	plugins.RegisterOnMessagePlugin(RandomPlugin{})
+	plugins.RegisterOnMessagePlugin(Plugin{})
 }

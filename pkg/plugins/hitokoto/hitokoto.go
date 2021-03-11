@@ -1,4 +1,4 @@
-package plugins
+package hitokoto
 
 import (
 	"encoding/json"
@@ -10,19 +10,15 @@ import (
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/plugins"
 )
 
-// Hitokoto 一言插件
-type Hitokoto struct {
-}
-
-// HitokotoPlugin 一言插件
-type HitokotoPlugin struct {
+// Plugin 一言插件
+type Plugin struct {
 	plugins.NoSortPlugin
 	plugins.NoInitPlugin
 	plugins.AlwaysNotFireNextEventPlugin
 }
 
 // PluginInfo PluginInfo
-func (w HitokotoPlugin) PluginInfo() *plugins.PluginInfo {
+func (w Plugin) PluginInfo() *plugins.PluginInfo {
 	return &plugins.PluginInfo{
 		ID:   "hitokoto",
 		Name: "一言插件",
@@ -30,7 +26,7 @@ func (w HitokotoPlugin) PluginInfo() *plugins.PluginInfo {
 }
 
 // IsFireEvent 是否出发
-func (w HitokotoPlugin) IsFireEvent(msg *plugins.MessageRequest) bool {
+func (w Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 	if len(msg.Elements) == 1 && msg.Elements[0].Type() == message.Text {
 		v := msg.Elements[0]
 		field, ok := v.(*message.TextElement)
@@ -40,7 +36,7 @@ func (w HitokotoPlugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 }
 
 // OnMessageEvent OnMessageEvent
-func (w HitokotoPlugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageResponse, error) {
+func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageResponse, error) {
 	result := &plugins.MessageResponse{
 		Elements: make([]message.IMessageElement, 1),
 	}
@@ -76,5 +72,5 @@ func (w HitokotoPlugin) OnMessageEvent(request *plugins.MessageRequest) (*plugin
 }
 
 func init() {
-	plugins.RegisterOnMessagePlugin(HitokotoPlugin{})
+	plugins.RegisterOnMessagePlugin(Plugin{})
 }
