@@ -79,7 +79,7 @@ func (t Tips) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageR
 		}
 	}
 	everyDay := len(params) > 4 && params[4] == "Y"
-	tipTime, err := time.Parse("13:00", timestr)
+	tipTime, err := time.Parse(timestr, "03:00")
 	if err != nil {
 		return nil, err
 	}
