@@ -116,7 +116,7 @@ func (t Tips) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageR
 // Run 回调
 func (t Tips) Run(bot *bot.Bot) error {
 	nowLocal := time.Now().Local()
-	prefix := fmt.Sprintf("tips.%v,%v", nowLocal.Hour(), nowLocal.Minute())
+	prefix := fmt.Sprintf("tips.%v.%v", nowLocal.Hour(), nowLocal.Minute())
 	storage.GetByPrefix(t.PluginInfo().ID, prefix, func(key, v string) error {
 		var info Info
 		err := json.Unmarshal([]byte(v), &info)
