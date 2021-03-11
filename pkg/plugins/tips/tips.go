@@ -103,6 +103,7 @@ func (t Tips) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageR
 		Hour:      hour,
 		Minute:    min,
 		EveryDay:  everyDay,
+		GroupCode: request.GroupCode,
 	}
 	jsonBytes, _ := json.Marshal(info)
 	err = storage.Put(t.PluginInfo().ID, fmt.Sprintf("tips.%v.%v.%v", info.Hour, info.Minute, info.ID), string(jsonBytes))
