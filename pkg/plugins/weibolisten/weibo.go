@@ -234,7 +234,7 @@ func (p Plugin) Run(bot *bot.Bot) error {
 		info.LastWeiboID = card.Mblog.BID
 		messageKey := []byte(fmt.Sprintf("weibo-listen.user-sender.%v.", info.UID))
 		m := message.SendingMessage{}
-		m.Elements = append(m.Elements, message.NewText(fmt.Sprintf("%v 发了微博 %v", card.Mblog.User.ScreenName, card.Mblog.Text)))
+		m.Elements = append(m.Elements, message.NewText(fmt.Sprintf("%v 发了微博 %v\n", card.Mblog.User.ScreenName, card.Mblog.RawText)))
 		m.Elements = append(m.Elements, message.NewText(card.Scheme))
 		err = storage.GetByPrefix([]byte(p.PluginInfo().ID), messageKey, func(k, senderValue []byte) error {
 			var sender ListenUserMessage
@@ -365,11 +365,12 @@ type WeiboContentCard struct {
 }
 
 type WeiboContentMblog struct {
-	IsTop int               `json:"isTop"`
-	Text  string            `json:"text"`
-	BID   string            `json:"bid"`
-	Pics  []WeiboContentPic `json:"pics"`
-	User  *WeiboUser        `json:"user"`
+	IsTop   int               `json:"isTop"`
+	Text    string            `json:"text"`
+	RawText string            `json:"raw_text"`
+	BID     string            `json:"bid"`
+	Pics    []WeiboContentPic `json:"pics"`
+	User    *WeiboUser        `json:"user"`
 }
 
 type WeiboUser struct {
