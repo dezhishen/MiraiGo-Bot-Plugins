@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strconv"
 	"strings"
 
@@ -88,6 +90,10 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 				listenUser = ListenUser{
 					UID: params[2],
 				}
+				err := setContainerId(&listenUser)
+				if err != nil {
+					return err
+				}
 				jsonBytes, _ := json.Marshal(listenUser)
 				storage.Put(w.PluginInfo().ID, key, string(jsonBytes))
 			} else {
@@ -155,9 +161,9 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 }
 
 // Run 回调
-func (t Plugin) Run(bot *bot.Bot) error {
+func (p Plugin) Run(bot *bot.Bot) error {
 	prefix := "weibo-listen.user."
-	storage.GetByPrefix(t.PluginInfo().ID, prefix, func(key, v string) error {
+	storage.GetByPrefix(p.PluginInfo().ID, prefix, func(key, v string) error {
 		var info ListenUser
 		err := json.Unmarshal([]byte(v), &info)
 		if err != nil {
@@ -165,7 +171,7 @@ func (t Plugin) Run(bot *bot.Bot) error {
 		}
 		countKey := fmt.Sprintf("weibo-listen.user-count.%v", info.UID)
 		var count int
-		err = storage.Get(t.PluginInfo().ID, countKey, func(s string) error {
+		err = storage.Get(p.PluginInfo().ID, countKey, func(s string) error {
 			if s == "" {
 				count = 0
 			} else {
@@ -180,8 +186,6 @@ func (t Plugin) Run(bot *bot.Bot) error {
 		if count == 0 {
 			return nil
 		}
-		//访问接口,发送消息
-
 		// sendingMessage := &message.SendingMessage{}
 		return nil
 	})
@@ -198,4 +202,67 @@ func init() {
 	p := Plugin{}
 	plugins.RegisterOnMessagePlugin(p)
 	plugins.RegisterSchedulerPlugin(p)
+}
+
+func getContainerIDByUid(uid string) (string, error) {
+	url := fmt.Sprintf("https://m.weibo.cn/api/container/getIndex?type=uid&value=%v", info.UID)
+	resp, err := http.DefaultClient.Get(url)
+	if err != nil {
+		return "", err
+	}
+	robots, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		return "", err
+	}
+	respBodyStr := string(robots)
+	if respBodyStr == "" {
+		return "", err
+	}
+	var containerResp ContainerResp
+	err = json.Unmarshal(robots, &containerResp)
+	if err != nil {
+		return "", err
+	}
+	for _, v := range containerResp.Data.TabsInfo.Tabs {
+		if v.TabKey == "weibo" {
+			return v.ContainerID, nil
+
+		}
+	}
+	return "", nil
+}
+
+func setContainerId(info *ListenUser) error {
+	if info.ContainerID == "" {
+		id, err := getContainerIDByUid(info.ContainerID)
+		if err != nil {
+			return err
+		}
+		info.ContainerID = id
+	}
+	return nil
+}
+
+type ContainerResp struct {
+	Data ContainerData `json:"data"`
+}
+
+type ContainerData struct {
+	TabsInfo TabsInfo `json:"tabsInfo"`
+}
+
+type Tab struct {
+	ID          string `json:"id"`
+	TabKey      string `json:"tabKey"`
+	TabType     string `json:"tab_type"`
+	ContainerID string `json:"containerid"`
+}
+
+type TabsInfo struct {
+	SelectedTab string `json:"selectedTab"`
+	Tabs        []Tab
+}
+
+type User struct {
 }
