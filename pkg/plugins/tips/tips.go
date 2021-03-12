@@ -63,11 +63,45 @@ func (t Tips) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageR
 	context := field.Content
 	params := strings.Split(context, " ")
 	if params[1] == "help" {
-		result.Elements[0] = message.NewText(fmt.Sprintf("请输入 .tips 小时:分钟 提示内容 提醒方式(2-群聊[只支持]) 每天重复(Y/N[默认])"))
+		result.Elements[0] = message.NewText(fmt.Sprintf("请输入 .tips 小时:分钟 提示内容 每天重复(Y/N[默认])\n .tips remove 小时:分钟 将会删除由你创建的该时间点的提醒"))
 		return result, nil
 	}
+	if params[1] == "remove" {
+		timestr := params[2]
+		hAndM := strings.Split(timestr, ":")
+		if len(hAndM) != 2 {
+			return nil, errors.New("错误的时间格式")
+		}
+		hour, err := strconv.Atoi(hAndM[0])
+		if err != nil {
+			return nil, errors.New("错误的时间格式")
+		}
+		min, err := strconv.Atoi(hAndM[1])
+		if err != nil {
+			return nil, errors.New("错误的时间格式")
+		}
+		prefix := []byte(fmt.Sprintf("tips.%v.%v", hour, min))
+		var keys []([]byte)
+		storage.GetByPrefix([]byte(t.PluginInfo().ID), prefix, func(k, v []byte) error {
+			var info Info
+			err := json.Unmarshal(v, &info)
+			if err != nil {
+				return err
+			}
+			if info.SenderUID == request.Sender.Uin {
+				keys = append(keys, k)
+			}
+			return nil
+		})
+		for _, k := range keys {
+			storage.Delete([]byte(t.PluginInfo().ID), k)
+		}
+		result.Elements[0] = message.NewText(fmt.Sprintf("已经移除由你创建的%v的提醒", timestr))
+		return result, nil
+
+	}
 	if len(params) < 3 {
-		return nil, errors.New("请输入 .tips 小时:分钟 提示内容 提醒方式(2-群聊[只支持]) 每天重复(Y/N[默认])")
+		return nil, errors.New("请输入 .tips 小时:分钟 提示内容 每天重复(Y/N[默认])")
 	}
 	timestr := params[1]
 	content := params[2]
