@@ -328,7 +328,6 @@ func getLastItemsByUIDAndContainerID(UID, ContainerID string) (*WeiboContentCard
 		return nil, err
 	}
 	respBodyStr := string(robots)
-	fmt.Print(respBodyStr)
 	if respBodyStr == "" {
 		return nil, err
 	}
