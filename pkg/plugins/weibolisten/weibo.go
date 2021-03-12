@@ -205,7 +205,7 @@ func init() {
 }
 
 func getContainerIDByUid(uid string) (string, error) {
-	url := fmt.Sprintf("https://m.weibo.cn/api/container/getIndex?type=uid&value=%v", info.UID)
+	url := fmt.Sprintf("https://m.weibo.cn/api/container/getIndex?type=uid&value=%v", uid)
 	resp, err := http.DefaultClient.Get(url)
 	if err != nil {
 		return "", err
