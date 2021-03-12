@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/Logiase/MiraiGo-Template/bot"
@@ -70,7 +69,7 @@ func (w Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 }
 
 // OnMessageEvent OnMessageEvent
-func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageResponse, error) {
+func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageResponse, error) {
 	var elements []message.IMessageElement
 
 	v := request.Elements[0]
@@ -83,10 +82,10 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		if len(params) < 3 {
 			return nil, errors.New("请输入要添加的微博账户的UID")
 		}
-		key := fmt.Sprintf("weibo-listen.user.%v", params[2])
-		err := storage.Get(w.PluginInfo().ID, key, func(s string) error {
+		key := []byte(fmt.Sprintf("weibo-listen.user.%v", params[2]))
+		err := storage.Get([]byte(p.PluginInfo().ID), key, func(s []byte) error {
 			var listenUser ListenUser
-			if s == "" {
+			if s == nil {
 				listenUser = ListenUser{
 					UID: params[2],
 				}
@@ -95,7 +94,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 					return err
 				}
 				jsonBytes, _ := json.Marshal(listenUser)
-				storage.Put(w.PluginInfo().ID, key, string(jsonBytes))
+				storage.Put([]byte(p.PluginInfo().ID), key, jsonBytes)
 			} else {
 				_ = json.Unmarshal([]byte(s), &listenUser)
 			}
@@ -113,14 +112,27 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		} else {
 			listenUserMessage.Reciver = request.Sender.Uin
 		}
-		messageKey := fmt.Sprintf("weibo-listen.user-sender.%v.%v.%v", listenUserMessage.UID, listenUserMessage.ReciveType, listenUserMessage.Reciver)
-		jsonBytes, _ := json.Marshal(listenUserMessage)
-		err = storage.Put(w.PluginInfo().ID, messageKey, string(jsonBytes))
-		if err != nil {
-			return nil, err
+		messageKey := []byte(
+			fmt.Sprintf(
+				"weibo-listen.user-sender.%v.%v.%v",
+				listenUserMessage.UID,
+				listenUserMessage.ReciveType,
+				listenUserMessage.Reciver,
+			))
+		notExists := false
+		storage.Get([]byte(p.PluginInfo().ID), messageKey, func(s []byte) error {
+			notExists = s == nil
+			return nil
+		})
+		if notExists {
+			jsonBytes, _ := json.Marshal(listenUserMessage)
+			err = storage.Put([]byte(p.PluginInfo().ID), messageKey, jsonBytes)
+			if err != nil {
+				return nil, err
+			}
+			incrKey := []byte(fmt.Sprintf("weibo-listen.user-count.%v", params[2]))
+			_, err = storage.Incr([]byte(p.PluginInfo().ID), incrKey, 1)
 		}
-		incrKey := fmt.Sprintf("weibo-listen.user-count.%v", params[2])
-		_, err = storage.Incr(w.PluginInfo().ID, incrKey, 1)
 		if err != nil {
 			return nil, err
 		}
@@ -138,13 +150,24 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		} else {
 			listenUserMessage.Reciver = request.Sender.Uin
 		}
-		messageKey := fmt.Sprintf("weibo-listen.user-sender.%v.%v.%v", listenUserMessage.UID, listenUserMessage.ReciveType, listenUserMessage.Reciver)
-		err := storage.Delete(w.PluginInfo().ID, messageKey)
+		messageKey := []byte(fmt.Sprintf("weibo-listen.user-sender.%v.%v.%v", listenUserMessage.UID, listenUserMessage.ReciveType, listenUserMessage.Reciver))
+		err := storage.Delete([]byte(p.PluginInfo().ID), messageKey)
 		if err != nil {
 			return nil, err
 		}
-		incrKey := fmt.Sprintf("weibo-listen.user-count.%v", params[2])
-		_, err = storage.Incr(w.PluginInfo().ID, incrKey, -1)
+		incrKey := []byte(fmt.Sprintf("weibo-listen.user-count.%v", params[2]))
+		doIncr := false
+		storage.Get([]byte(p.PluginInfo().ID), incrKey, func(s []byte) error {
+			if s == nil {
+				return nil
+			}
+			count := storage.BytesToInt(s)
+			doIncr = count > 0
+			return nil
+		})
+		if doIncr {
+			_, err = storage.Incr([]byte(p.PluginInfo().ID), incrKey, -1)
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -162,21 +185,22 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 
 // Run 回调
 func (p Plugin) Run(bot *bot.Bot) error {
-	prefix := "weibo-listen.user."
-	storage.GetByPrefix(p.PluginInfo().ID, prefix, func(key, v string) error {
+	prefix := []byte("weibo-listen.user.")
+	var listenUsers []ListenUser
+	storage.GetByPrefix([]byte(p.PluginInfo().ID), prefix, func(key, v []byte) error {
 		var info ListenUser
-		err := json.Unmarshal([]byte(v), &info)
+		err := json.Unmarshal(v, &info)
 		if err != nil {
 			return err
 		}
-		countKey := fmt.Sprintf("weibo-listen.user-count.%v", info.UID)
+		countKey := []byte(fmt.Sprintf("weibo-listen.user-count.%v", info.UID))
 		var count int
-		err = storage.Get(p.PluginInfo().ID, countKey, func(s string) error {
-			if s == "" {
+		err = storage.Get([]byte(p.PluginInfo().ID), countKey, func(s []byte) error {
+			if s == nil {
 				count = 0
 			} else {
-				count, err = strconv.Atoi(s)
-				return err
+				count = storage.BytesToInt(s)
+				return nil
 			}
 			return nil
 		})
@@ -186,16 +210,56 @@ func (p Plugin) Run(bot *bot.Bot) error {
 		if count == 0 {
 			return nil
 		}
-		// sendingMessage := &message.SendingMessage{}
+		listenUsers = append(listenUsers, info)
 		return nil
 	})
+	for _, info := range listenUsers {
+		key := []byte(fmt.Sprintf("weibo-listen.user.%v", info.UID))
+		if info.ContainerID == "" {
+			setContainerId(&info)
+			jsonBytes, _ := json.Marshal(info)
+			storage.Put([]byte(p.PluginInfo().ID), key, jsonBytes)
+		}
+		card, err := getLastItemsByUIDAndContainerID(info.UID, info.ContainerID)
+		if err != nil {
+			fmt.Printf("%v", err)
+			return err
+		}
+		if card.Mblog.BID == info.LastWeiboID {
+			return nil
+		}
+		info.LastWeiboID = card.Mblog.BID
+		messageKey := []byte(fmt.Sprintf("weibo-listen.user-sender.%v.", info.UID))
+		m := message.SendingMessage{}
+		m.Elements = append(m.Elements, message.NewText(fmt.Sprintf("%v 发了微博 %v", card.Mblog.User.ScreenName, card.Mblog.Text)))
+		m.Elements = append(m.Elements, message.NewText(card.Scheme))
+		err = storage.GetByPrefix([]byte(p.PluginInfo().ID), messageKey, func(k, senderValue []byte) error {
+			var sender ListenUserMessage
+			json.Unmarshal([]byte(senderValue), &sender)
+			if &sender == nil {
+				return nil
+			}
+			if sender.ReciveType == GroupMessage {
+				bot.QQClient.SendGroupMessage(sender.Reciver, &m)
+			} else if sender.ReciveType == PrivateMessage {
+				bot.QQClient.SendPrivateMessage(sender.Reciver, &m)
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+		jsonBytes, _ := json.Marshal(info)
+		storage.Put([]byte(p.PluginInfo().ID), key, jsonBytes)
+	}
 	// bot.QQClient.Send
 	return nil
 }
 
 // Cron cron表达式
 func (t Plugin) Cron() string {
-	return "0 0/5 * * * ?"
+	// return "0 0/5 * * * ?"
+	return "0 */1 * * * ?"
 }
 
 func init() {
@@ -235,13 +299,84 @@ func getContainerIDByUid(uid string) (string, error) {
 
 func setContainerId(info *ListenUser) error {
 	if info.ContainerID == "" {
-		id, err := getContainerIDByUid(info.ContainerID)
+		id, err := getContainerIDByUid(info.UID)
 		if err != nil {
 			return err
+		}
+		if id == "" {
+			return errors.New("UID错误,或者该微博不可见")
 		}
 		info.ContainerID = id
 	}
 	return nil
+}
+
+func getLastItemsByUIDAndContainerID(UID, ContainerID string) (*WeiboContentCard, error) {
+	var contentResp WeiboContentResp
+	url := fmt.Sprintf(
+		"https://m.weibo.cn/api/container/getIndex?uid=%v&t=0&type=uid&containerid=%v",
+		UID,
+		ContainerID,
+	)
+	resp, err := http.DefaultClient.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	robots, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	respBodyStr := string(robots)
+	fmt.Print(respBodyStr)
+	if respBodyStr == "" {
+		return nil, err
+	}
+	err = json.Unmarshal(robots, &contentResp)
+	if err != nil {
+		return nil, err
+	}
+	if &contentResp == nil {
+		return nil, nil
+	}
+	for _, c := range contentResp.Data.Cards {
+		if c.Mblog.IsTop == 1 {
+			continue
+		}
+		return &c, nil
+	}
+	return nil, nil
+}
+
+type WeiboContentResp struct {
+	Data *WeiboContentData `json:"data"`
+}
+
+type WeiboContentData struct {
+	Cards []WeiboContentCard `json:"cards"`
+}
+
+type WeiboContentCard struct {
+	CardType int                `json:"card_type"`
+	ItemID   string             `json:"itemid"`
+	Scheme   string             `json:"scheme"`
+	Mblog    *WeiboContentMblog `json:"mblog"`
+}
+
+type WeiboContentMblog struct {
+	IsTop int               `json:"isTop"`
+	Text  string            `json:"text"`
+	BID   string            `json:"bid"`
+	Pics  []WeiboContentPic `json:"pics"`
+	User  *WeiboUser        `json:"user"`
+}
+
+type WeiboUser struct {
+	ScreenName string `json:"screen_name"`
+}
+type WeiboContentPic struct {
+	PID string `json:"pid"`
+	Url string `json:"url"`
 }
 
 type ContainerResp struct {
@@ -253,15 +388,14 @@ type ContainerData struct {
 }
 
 type Tab struct {
-	ID          string `json:"id"`
+	ID          int    `json:"id"`
 	TabKey      string `json:"tabKey"`
 	TabType     string `json:"tab_type"`
 	ContainerID string `json:"containerid"`
 }
 
 type TabsInfo struct {
-	SelectedTab string `json:"selectedTab"`
-	Tabs        []Tab
+	Tabs []Tab `json:"tabs"`
 }
 
 type User struct {

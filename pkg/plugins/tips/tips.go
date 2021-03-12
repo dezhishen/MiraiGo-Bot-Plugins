@@ -106,7 +106,7 @@ func (t Tips) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageR
 		GroupCode: request.GroupCode,
 	}
 	jsonBytes, _ := json.Marshal(info)
-	err = storage.Put(t.PluginInfo().ID, fmt.Sprintf("tips.%v.%v.%v", info.Hour, info.Minute, info.ID), string(jsonBytes))
+	err = storage.Put([]byte(t.PluginInfo().ID), []byte(fmt.Sprintf("tips.%v.%v.%v", info.Hour, info.Minute, info.ID)), jsonBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -117,10 +117,10 @@ func (t Tips) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageR
 // Run 回调
 func (t Tips) Run(bot *bot.Bot) error {
 	nowLocal := time.Now().Local()
-	prefix := fmt.Sprintf("tips.%v.%v.", nowLocal.Hour(), nowLocal.Minute())
-	storage.GetByPrefix(t.PluginInfo().ID, prefix, func(key, v string) error {
+	prefix := []byte(fmt.Sprintf("tips.%v.%v.", nowLocal.Hour(), nowLocal.Minute()))
+	storage.GetByPrefix([]byte(t.PluginInfo().ID), prefix, func(key, v []byte) error {
 		var info Info
-		err := json.Unmarshal([]byte(v), &info)
+		err := json.Unmarshal(v, &info)
 		if err != nil {
 			return err
 		}
@@ -129,7 +129,7 @@ func (t Tips) Run(bot *bot.Bot) error {
 		sendingMessage.Append(message.NewText(info.Content))
 		go bot.QQClient.SendGroupMessage(info.GroupCode, sendingMessage)
 		if !info.EveryDay {
-			go storage.Delete(t.PluginInfo().ID, key)
+			go storage.Delete([]byte(t.PluginInfo().ID), key)
 		}
 		return nil
 	})
