@@ -50,7 +50,7 @@ type Plugin struct {
 }
 
 // PluginInfo PluginInfo
-func (w Plugin) PluginInfo() *plugins.PluginInfo {
+func (p Plugin) PluginInfo() *plugins.PluginInfo {
 	return &plugins.PluginInfo{
 		ID:          "weibo-listen",
 		Name:        "微博监听插件",
@@ -59,7 +59,7 @@ func (w Plugin) PluginInfo() *plugins.PluginInfo {
 }
 
 // IsFireEvent 是否触发
-func (w Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
+func (p Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 	if len(msg.Elements) == 1 && msg.Elements[0].Type() == message.Text {
 		v := msg.Elements[0]
 		field, ok := v.(*message.TextElement)
@@ -99,7 +99,7 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 			listenUser = ListenUser{
 				UID: params[2],
 			}
-			err := setContainerId(&listenUser)
+			err := setContainerID(&listenUser)
 			if err != nil {
 				return nil, err
 			}
@@ -219,7 +219,7 @@ func (p Plugin) Run(bot *bot.Bot) error {
 	for _, info := range listenUsers {
 		key := []byte(fmt.Sprintf("weibo-listen.user.%v", info.UID))
 		if info.ContainerID == "" {
-			setContainerId(&info)
+			setContainerID(&info)
 			jsonBytes, _ := json.Marshal(info)
 			storage.Put([]byte(p.PluginInfo().ID), key, jsonBytes)
 		}
@@ -260,9 +260,8 @@ func (p Plugin) Run(bot *bot.Bot) error {
 }
 
 // Cron cron表达式
-func (t Plugin) Cron() string {
-	// return "0 0/5 * * * ?"
-	return "0 */1 * * * ?"
+func (p Plugin) Cron() string {
+	return "0 0/5 * * * ?"
 }
 
 func init() {
@@ -271,8 +270,8 @@ func init() {
 	plugins.RegisterSchedulerPlugin(p)
 }
 
-func getContainerIDByUid(uid string) (string, error) {
-	url := fmt.Sprintf("https://m.weibo.cn/api/container/getIndex?type=uid&value=%v", uid)
+func getContainerIDByUID(UID string) (string, error) {
+	url := fmt.Sprintf("https://m.weibo.cn/api/container/getIndex?type=uid&value=%v", UID)
 	resp, err := http.DefaultClient.Get(url)
 	if err != nil {
 		return "", err
@@ -300,9 +299,9 @@ func getContainerIDByUid(uid string) (string, error) {
 	return "", nil
 }
 
-func setContainerId(info *ListenUser) error {
+func setContainerID(info *ListenUser) error {
 	if info.ContainerID == "" {
-		id, err := getContainerIDByUid(info.UID)
+		id, err := getContainerIDByUID(info.UID)
 		if err != nil {
 			return err
 		}
