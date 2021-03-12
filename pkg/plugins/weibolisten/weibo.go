@@ -84,16 +84,18 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		}
 		key := []byte(fmt.Sprintf("weibo-listen.user.%v", params[2]))
 		var listenUser ListenUser
+		exists := false
 		err := storage.Get([]byte(p.PluginInfo().ID), key, func(s []byte) error {
 			if s != nil {
 				_ = json.Unmarshal([]byte(s), &listenUser)
+				exists = true
 			}
 			return nil
 		})
 		if err != nil {
 			return nil, err
 		}
-		if &listenUser == nil {
+		if !exists {
 			listenUser = ListenUser{
 				UID: params[2],
 			}
