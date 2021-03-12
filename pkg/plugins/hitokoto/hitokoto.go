@@ -25,7 +25,7 @@ func (w Plugin) PluginInfo() *plugins.PluginInfo {
 	}
 }
 
-// IsFireEvent 是否出发
+// IsFireEvent 是否触发
 func (w Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 	if len(msg.Elements) == 1 && msg.Elements[0].Type() == message.Text {
 		v := msg.Elements[0]
