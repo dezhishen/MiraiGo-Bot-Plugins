@@ -340,6 +340,9 @@ func getLastItemsByUIDAndContainerID(UID, ContainerID string) (*WeiboContentCard
 	if &contentResp == nil {
 		return nil, nil
 	}
+	if contentResp.Ok != 1 {
+		return nil, errors.New(fmt.Sprintf("微博请求失败%v", contentResp.Msg))
+	}
 	for _, c := range contentResp.Data.Cards {
 		if c.Mblog.IsTop == 1 {
 			continue
@@ -350,6 +353,8 @@ func getLastItemsByUIDAndContainerID(UID, ContainerID string) (*WeiboContentCard
 }
 
 type WeiboContentResp struct {
+	Ok   int               `json:"ok"`
+	Msg  string            `json:"msg"`
 	Data *WeiboContentData `json:"data"`
 }
 
