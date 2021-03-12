@@ -83,25 +83,26 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 			return nil, errors.New("请输入要添加的微博账户的UID")
 		}
 		key := []byte(fmt.Sprintf("weibo-listen.user.%v", params[2]))
+		var listenUser ListenUser
 		err := storage.Get([]byte(p.PluginInfo().ID), key, func(s []byte) error {
-			var listenUser ListenUser
-			if s == nil {
-				listenUser = ListenUser{
-					UID: params[2],
-				}
-				err := setContainerId(&listenUser)
-				if err != nil {
-					return err
-				}
-				jsonBytes, _ := json.Marshal(listenUser)
-				storage.Put([]byte(p.PluginInfo().ID), key, jsonBytes)
-			} else {
+			if s != nil {
 				_ = json.Unmarshal([]byte(s), &listenUser)
 			}
 			return nil
 		})
 		if err != nil {
 			return nil, err
+		}
+		if &listenUser == nil {
+			listenUser = ListenUser{
+				UID: params[2],
+			}
+			err := setContainerId(&listenUser)
+			if err != nil {
+				return nil, err
+			}
+			jsonBytes, _ := json.Marshal(listenUser)
+			storage.Put([]byte(p.PluginInfo().ID), key, jsonBytes)
 		}
 		listenUserMessage := ListenUserMessage{
 			UID:        params[2],
