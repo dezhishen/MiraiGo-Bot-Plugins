@@ -76,7 +76,7 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 }
 
 func getScore(t time.Time, pid string, uid int64, genIfNil bool) (int, error) {
-	timestr := t.Format("2020-02-08")
+	timestr := fmt.Sprintf("%v-%v-%v", t.Year(), t.Month(), t.Day())
 	key := []byte(fmt.Sprintf("jrrp.%v.%v", uid, timestr))
 	var score int
 	err := storage.Get([]byte(pid), key, func(b []byte) error {
