@@ -56,7 +56,7 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	}
 	if score == 0 {
 		rand.Seed(time.Now().UnixNano())
-		score := rand.Intn(100) + 1
+		score = rand.Intn(100) + 1
 		storage.Put([]byte(p.PluginInfo().ID), key, storage.IntToBytes(score))
 		keyLast7Day := timeNow.AddDate(0, 0, -7).Format("2020-02-08")
 		storage.Delete([]byte(p.PluginInfo().ID), []byte(keyLast7Day))
