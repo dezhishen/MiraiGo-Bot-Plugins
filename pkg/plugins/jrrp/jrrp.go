@@ -95,7 +95,9 @@ func getScore(t time.Time, pid string, uid int64, genIfNil bool) (int, error) {
 		rand.Seed(time.Now().UnixNano())
 		score = rand.Intn(100) + 1
 		storage.Put([]byte(pid), key, storage.IntToBytes(score))
-		keyLast7Day := fmt.Sprintf("jrrp.%v.%v", uid, t.AddDate(0, 0, -7).Format("2020-02-08"))
+		theTime := t.Add(-7 * 24 * time.Hour)
+		theTimestr := fmt.Sprintf("%v-%v-%v", theTime.Year(), theTime.Month(), theTime.Day())
+		keyLast7Day := fmt.Sprintf("jrrp.%v.%v", uid, theTimestr)
 		storage.Delete([]byte(pid), []byte(keyLast7Day))
 	}
 	return score, nil
