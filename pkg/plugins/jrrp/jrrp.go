@@ -60,8 +60,8 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 			return nil, errors.New("请输入一个7以内的正整数")
 		}
 		for i := 1; i <= preDays; i++ {
-			preTime := timeNow.AddDate(0, 0, -i)
-			score, err := getScore(preTime, p.PluginInfo().ID, request.Sender.Uin, false)
+			timeNow = timeNow.Add(-1 * 24 * time.Hour)
+			score, err := getScore(timeNow, p.PluginInfo().ID, request.Sender.Uin, false)
 			if err != nil {
 				return nil, err
 			}
