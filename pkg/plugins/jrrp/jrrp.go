@@ -1,8 +1,10 @@
 package jrrp
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 
@@ -38,31 +40,62 @@ func (p Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 
 // OnMessageEvent OnMessageEvent
 func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageResponse, error) {
-	result := &plugins.MessageResponse{
-		Elements: make([]message.IMessageElement, 1),
-	}
+	result := &plugins.MessageResponse{}
 	timeNow := time.Now().Local()
-	timestr := timeNow.Format("2020-02-08")
-	key := []byte(fmt.Sprintf("jrrp.%v.%v", request.Sender.Uin, timestr))
+	score, err := getScore(timeNow, p.PluginInfo().ID, request.Sender.Uin, true)
+	if err != nil {
+		return nil, err
+	}
+	var elements []message.IMessageElement
+	elements = append(elements, message.NewText(fmt.Sprintf("[%v]今日人品: %v", request.GetNickName(), score)))
+
+	v := request.Elements[0]
+	field, _ := v.(*message.TextElement)
+	context := field.Content
+	params := strings.Split(context, " ")
+
+	if len(params) > 1 {
+		preDays, err := strconv.Atoi(params[1])
+		if err != nil {
+			return nil, errors.New("请输入一个7以内的正整数")
+		}
+		for i := 1; i <= preDays; i++ {
+			preTime := timeNow.AddDate(0, 0, -i)
+			score, err := getScore(preTime, p.PluginInfo().ID, request.Sender.Uin, false)
+			if err != nil {
+				return nil, err
+			}
+			if score == 0 {
+				break
+			}
+			elements = append(elements, message.NewText(fmt.Sprintf("\n[%v]历史人品: %v", request.GetNickName(), score)))
+		}
+	}
+	result.Elements = elements
+	return result, nil
+}
+
+func getScore(t time.Time, pid string, uid int64, genIfNil bool) (int, error) {
+	timestr := t.Format("2020-02-08")
+	key := []byte(fmt.Sprintf("jrrp.%v.%v", uid, timestr))
 	var score int
-	err := storage.Get([]byte(p.PluginInfo().ID), key, func(b []byte) error {
+	err := storage.Get([]byte(pid), key, func(b []byte) error {
 		if b != nil {
 			score = storage.BytesToInt(b)
 		}
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-	if score == 0 {
+	if genIfNil && score == 0 {
 		rand.Seed(time.Now().UnixNano())
 		score = rand.Intn(100) + 1
-		storage.Put([]byte(p.PluginInfo().ID), key, storage.IntToBytes(score))
-		keyLast7Day := timeNow.AddDate(0, 0, -7).Format("2020-02-08")
-		storage.Delete([]byte(p.PluginInfo().ID), []byte(keyLast7Day))
+		storage.Put([]byte(pid), key, storage.IntToBytes(score))
+		keyLast7Day := fmt.Sprintf("jrrp.%v.%v", uid, t.AddDate(0, 0, -7).Format("2020-02-08"))
+		storage.Delete([]byte(pid), []byte(keyLast7Day))
 	}
-	result.Elements[0] = message.NewText(fmt.Sprintf("[%v]今日人品: %v", request.GetNickName(), score))
-	return result, nil
+	return score, nil
 }
 
 func init() {
