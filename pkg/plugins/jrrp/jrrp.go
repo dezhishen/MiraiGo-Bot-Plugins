@@ -79,7 +79,7 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 }
 
 func getScore(t time.Time, pid string, uid int64, genIfNil bool) (int, error) {
-	timestr := fmt.Sprintf("%v-%v-%v", t.Year(), t.Month(), t.Day())
+	timestr := timeToStr(t)
 	key := []byte(fmt.Sprintf("jrrp.%v.%v", uid, timestr))
 	var score int
 	err := storage.Get([]byte(pid), key, func(b []byte) error {
@@ -96,11 +96,15 @@ func getScore(t time.Time, pid string, uid int64, genIfNil bool) (int, error) {
 		score = rand.Intn(100) + 1
 		storage.Put([]byte(pid), key, storage.IntToBytes(score))
 		theTime := t.Add(-7 * 24 * time.Hour)
-		theTimestr := fmt.Sprintf("%v-%v-%v", theTime.Year(), theTime.Month(), theTime.Day())
+		theTimestr := timeToStr(theTime)
 		keyLast7Day := fmt.Sprintf("jrrp.%v.%v", uid, theTimestr)
 		storage.Delete([]byte(pid), []byte(keyLast7Day))
 	}
 	return score, nil
+}
+
+func timeToStr(t time.Time) string {
+	return fmt.Sprintf("%v-%v-%v", t.Year(), int(t.Month()), t.Day())
 }
 
 func init() {
