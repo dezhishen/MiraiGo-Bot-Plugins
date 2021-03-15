@@ -1,11 +1,14 @@
 package calendar
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Logiase/MiraiGo-Template/bot"
@@ -128,20 +131,29 @@ func getDate(time time.Time) (string, error) {
 	if resp.Data == nil {
 		return "", errors.New("data is nil")
 	}
-	return fmt.Sprintf(
-		"%v-%v-%v,周%v %v,农历%v%v %v, %v,%v,%v",
-		resp.Data.SYear,
-		resp.Data.SMonth,
-		resp.Data.SDay,
+	buf := new(bytes.Buffer)
+	str := strings.Join([]string{
+		strconv.Itoa(resp.Data.SYear),
+		"年",
+		strconv.Itoa(resp.Data.SMonth),
+		"月",
+		strconv.Itoa(resp.Data.SDay),
+		"日,周",
 		resp.Data.Week,
-		resp.Data.SolarFestival,
-		resp.Data.IMonthChinese,
-		resp.Data.IDayChinese,
-		resp.Data.LunarFestival,
-		resp.Data.CYear,
-		resp.Data.CMonth,
-		resp.Data.CDay,
-	), nil
+	}, "")
+	buf.WriteString(str)
+	if resp.Data.SolarFestival != "" {
+		buf.WriteString("\n")
+		buf.WriteString(strings.TrimSpace(resp.Data.SolarFestival))
+	}
+	buf.WriteString("\n农历")
+	buf.WriteString(resp.Data.IMonthChinese)
+	buf.WriteString(resp.Data.IDayChinese)
+	if resp.Data.LunarFestival != "" {
+		buf.WriteString("\n")
+		buf.WriteString(strings.TrimSpace(resp.Data.LunarFestival))
+	}
+	return buf.String(), nil
 }
 func init() {
 	plugin := Plugin{}
