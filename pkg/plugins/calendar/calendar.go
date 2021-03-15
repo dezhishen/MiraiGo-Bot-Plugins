@@ -129,18 +129,18 @@ func getDate(time time.Time) (string, error) {
 		return "", errors.New("data is nil")
 	}
 	return fmt.Sprintf(
-		"%v-%v-%v,周%v %v,农历%v%v %v, %v %v %v",
+		"%v-%v-%v,周%v %v,农历%v%v %v, %v,%v,%v",
 		resp.Data.SYear,
 		resp.Data.SMonth,
 		resp.Data.SDay,
 		resp.Data.Week,
+		resp.Data.SolarFestival,
+		resp.Data.IMonthChinese,
 		resp.Data.IDayChinese,
 		resp.Data.LunarFestival,
-		resp.Data.SolarFestival,
 		resp.Data.CYear,
 		resp.Data.CMonth,
 		resp.Data.CDay,
-		resp.Data.IMonthChinese,
 	), nil
 }
 func init() {
