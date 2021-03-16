@@ -50,9 +50,12 @@ github.com/dezhiShen/MiraiGo-Bot v0.0.0-20210311062309-884ed2be4e0a/go.mod h1:Ks
 github.com/dezhiShen/MiraiGo-Bot v0.0.0-20210312025354-09ea9709e6df/go.mod h1:SqE1lWHe5d/+3286xp0KeCIhTus+qOOtR32Bbznjpz0=
 github.com/dezhiShen/MiraiGo-Bot v0.0.0-20210312091521-bb5806ac6447 h1:/lstoSMk6Xj48P2gIMR5Vf261Jiv/BmCpYCDSQlRXZE=
 github.com/dezhiShen/MiraiGo-Bot v0.0.0-20210312091521-bb5806ac6447/go.mod h1:1y0lDif1UYqjrLPF+0INp2/d/GiDRb+7ORR2nVZxr/c=
+github.com/dezhiShen/MiraiGo-Bot v0.0.0-20210316030742-68a6da37e7ad h1:Hsu7qjGp24JrYxVBELezfqsbb9aTdLoFRyh4br8hkp4=
+github.com/dezhiShen/MiraiGo-Bot v0.0.0-20210316030742-68a6da37e7ad/go.mod h1:9pEY83YbQa2/JDBIuW3SjeeXjNy6nl4/6hDLgv1fs9I=
 github.com/dezhiShen/MiraiGo-Bot-Plugins v0.0.0-20210311015410-6d7422f054ff/go.mod h1:uJS793QIkTIwRGAj0/MjBvobQOgQTwh1x+IGa1voNdg=
 github.com/dezhiShen/MiraiGo-Bot-Plugins v0.0.0-20210311124744-22b4a1b684bb/go.mod h1:0KoTxW+UaufJeGOhl/iS3rW9d+4JbFt0sYPVKFhiaS4=
 github.com/dezhiShen/MiraiGo-Bot-Plugins v0.0.0-20210312031442-cd4c0a3bb631/go.mod h1:MvrvQjLU1bQU9r2XW7efr0n3JEWExtScbdnjRi5DWwA=
+github.com/dezhiShen/MiraiGo-Bot-Plugins v0.0.0-20210316030637-2345f2fdc94c/go.mod h1:SXfq+ckWR0F1Ov3ctPHMUgGVpCH9MBmU/4CZQvBzADE=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dgryski/go-sip13 v0.0.0-20181026042036-e10d5fee7954/go.mod h1:vAd38F8PWV+bWy6jNmig1y/TA+kYO4g3RSRF0IAv0no=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
@@ -189,6 +192,7 @@ github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 h1:zYyBkD/k9seD2A7fsi6
 github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646/go.mod h1:jpp1/29i3P1S/RLdc7JQKbRpFeM1dOBd8T9ki5s+AY8=
 github.com/oklog/ulid v1.3.1/go.mod h1:CirwcVhetQ6Lv90oh/F+FBtV6XMibvdAFo93nm5qn4U=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
+github.com/patrickmn/go-cache v2.1.0+incompatible/go.mod h1:3Qf8kWWT7OJRJbdiICTKqZju1ZixQ/KpMGzzAfe6+WQ=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
 github.com/pelletier/go-toml v1.8.1 h1:1Nf83orprkJyknT6h7zbuEGUEjcyVlCxSUGTENmNCRM=
 github.com/pelletier/go-toml v1.8.1/go.mod h1:T2/BmBdy8dvIRq1a/8aqjN41wvWlN4lrapLU/GW4pbc=
