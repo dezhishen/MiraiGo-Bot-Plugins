@@ -350,8 +350,6 @@ MigrationBackup/
 .ionide/
 plugin-storage.db
 plugin-storage.db.lock
-.vscode/launch.json
 device.json
 application.yaml
 cmd/__debug_bin
-cmd/main.go
