@@ -261,7 +261,7 @@ func (p Plugin) Run(bot *bot.Bot) error {
 
 // Cron cron表达式
 func (p Plugin) Cron() string {
-	return "0 0/5 * * * ?"
+	return "0 0/15 * * * ?"
 }
 
 func init() {
