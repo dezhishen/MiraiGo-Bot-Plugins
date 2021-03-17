@@ -53,10 +53,12 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		case "r":
 			var platform string
 			if len(params) > 2 {
-				if params[2] == "pc" || params[2] == "mobile" {
-					platform = params[2]
+				if params[2] == "p" {
+					platform = "pc"
+				} else if params[2] == "m" {
+					platform = "mobile"
 				} else {
-					return nil, errors.New("不支持的类型,只支持[mobile/pc]")
+					return nil, errors.New("不支持的类型,只支持 m/pc (mobile/pc)")
 				}
 			}
 			b, err := randomImage(platform)
