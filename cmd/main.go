@@ -5,6 +5,7 @@ import (
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/haimage"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/hitokoto"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/jrrp"
+	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/pixiv"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/random"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/thecats"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/tips"
