@@ -66,9 +66,8 @@ func init() {
 }
 
 type Data struct {
-	Breeds []string `json:"breeds"`
-	ID     string   `json:"id"`
-	Url    string   `json:"url"`
+	ID  string `json:"id"`
+	Url string `json:"url"`
 }
 
 func getCatPic() ([]byte, error) {
