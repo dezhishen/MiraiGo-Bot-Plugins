@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-var randomUrl = "https://open.pixivic.net/wallpaper/%v/random?size=large&domain=https://i.pixiv.cat&webp=0&detail=1"
+var randomUrl = "https://open.pixivic.net/wallpaper/%v/random?size=original&domain=https://i.pixiv.cat&webp=0&detail=1"
 
 func randomImage(platform string) ([]byte, error) {
 	if platform == "" {
