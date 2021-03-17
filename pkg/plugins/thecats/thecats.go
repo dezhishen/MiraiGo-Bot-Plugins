@@ -44,15 +44,20 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	result := &plugins.MessageResponse{
 		Elements: make([]message.IMessageElement, 1),
 	}
-	b, e := getCatPic()
-	if e != nil {
-		return nil, e
-	}
-	gimage, err := bot.Instance.UploadGroupImage(request.GroupCode, bytes.NewReader(b))
+	b, err := getCatPic()
 	if err != nil {
 		return nil, err
 	}
-	result.Elements[0] = gimage
+	var image message.IMessageElement
+	if plugins.GroupMessage == request.MessageType {
+		image, err = bot.Instance.UploadGroupImage(request.GroupCode, bytes.NewReader(b))
+	} else {
+		image, err = bot.Instance.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(b))
+	}
+	if err != nil {
+		return nil, err
+	}
+	result.Elements[0] = image
 	return result, nil
 }
 
