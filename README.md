@@ -11,4 +11,5 @@ MiraiGo-Bot插件库
 [今日人品](./pkg/plugins/jrrp)|`.jrrp`展示今日人品<br> `.jrrp 7` 显示最多7日的历史人品
 [日历](./pkg/plugins/calendar)|`.calendar` 展示今日的日历(阳历,周几,阳历节日,农历,农历节日)<br>`.calendar Y/N` 启用/禁用定时(早6点)发送
 [猫猫图](./pkg/plugins/thecats)|`.thecat` 随机发送一条猫猫图
+[古风小姐姐](./pkg/plugins/haimage)|`.hapic` 随机发送一张古风小姐姐图
 ~~[微博监听](./pkg/plugins/weibolisten)~~|由于访问限制,暂时不可用
