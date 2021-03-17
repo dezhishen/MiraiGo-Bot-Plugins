@@ -52,6 +52,8 @@ github.com/dezhiShen/MiraiGo-Bot v0.0.0-20210312091521-bb5806ac6447 h1:/lstoSMk6
 github.com/dezhiShen/MiraiGo-Bot v0.0.0-20210312091521-bb5806ac6447/go.mod h1:1y0lDif1UYqjrLPF+0INp2/d/GiDRb+7ORR2nVZxr/c=
 github.com/dezhiShen/MiraiGo-Bot v0.0.0-20210316030742-68a6da37e7ad h1:Hsu7qjGp24JrYxVBELezfqsbb9aTdLoFRyh4br8hkp4=
 github.com/dezhiShen/MiraiGo-Bot v0.0.0-20210316030742-68a6da37e7ad/go.mod h1:9pEY83YbQa2/JDBIuW3SjeeXjNy6nl4/6hDLgv1fs9I=
+github.com/dezhiShen/MiraiGo-Bot v0.0.0-20210317005612-faefdc4cd894 h1:mP73nN0MH0FPiuY0m81xIunB2atN15XzLPelYEaVT3g=
+github.com/dezhiShen/MiraiGo-Bot v0.0.0-20210317005612-faefdc4cd894/go.mod h1:9pEY83YbQa2/JDBIuW3SjeeXjNy6nl4/6hDLgv1fs9I=
 github.com/dezhiShen/MiraiGo-Bot-Plugins v0.0.0-20210311015410-6d7422f054ff/go.mod h1:uJS793QIkTIwRGAj0/MjBvobQOgQTwh1x+IGa1voNdg=
 github.com/dezhiShen/MiraiGo-Bot-Plugins v0.0.0-20210311124744-22b4a1b684bb/go.mod h1:0KoTxW+UaufJeGOhl/iS3rW9d+4JbFt0sYPVKFhiaS4=
 github.com/dezhiShen/MiraiGo-Bot-Plugins v0.0.0-20210312031442-cd4c0a3bb631/go.mod h1:MvrvQjLU1bQU9r2XW7efr0n3JEWExtScbdnjRi5DWwA=
