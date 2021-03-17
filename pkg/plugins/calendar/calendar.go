@@ -14,6 +14,7 @@ import (
 	"github.com/Logiase/MiraiGo-Template/bot"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/plugins"
+	"github.com/dezhiShen/MiraiGo-Bot/pkg/storage"
 )
 
 // Plugin 日历插件
@@ -36,7 +37,7 @@ func (p Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 	if len(msg.Elements) == 1 && msg.Elements[0].Type() == message.Text {
 		v := msg.Elements[0]
 		field, ok := v.(*message.TextElement)
-		return ok && field.Content == ".calendar"
+		return ok && strings.HasPrefix(field.Content, ".calendar")
 	}
 	return false
 }
@@ -46,6 +47,21 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	msg, err := getDate(time.Now())
 	if err != nil {
 		return nil, err
+	}
+	v := request.Elements[0]
+	field, _ := v.(*message.TextElement)
+	context := field.Content
+	params := strings.Split(context, " ")
+	if len(params) > 1 {
+		bucket := []byte(p.PluginInfo().ID)
+		key := []byte("calendar.enable")
+		if "Y" == (params[1]) {
+			storage.Put(bucket, key, storage.IntToBytes(1))
+			msg += "\n已启用定时发送日历"
+		} else if "N" == (params[1]) {
+			storage.Delete(bucket, key)
+			msg += "\n已禁用定时发送日历"
+		}
 	}
 	return &plugins.MessageResponse{
 		Elements: []message.IMessageElement{message.NewText(msg)},
@@ -59,7 +75,21 @@ func (p Plugin) Cron() string {
 
 // Run 回调
 func (p Plugin) Run(bot *bot.Bot) error {
-	getDate(time.Now())
+	text, _ := getDate(time.Now())
+	sendingMessage := &message.SendingMessage{}
+	sendingMessage.Append(message.NewText(text))
+	groups, err := bot.GetGroupList()
+	if err != nil {
+		fmt.Printf("calendar send msg err %v", err)
+	}
+	bucket := []byte(p.PluginInfo().ID)
+	key := []byte("calendar.enable")
+	for _, g := range groups {
+		value, _ := storage.GetValue(bucket, key)
+		if value != nil && storage.BytesToInt(value) == 1 {
+			go bot.QQClient.SendGroupMessage(g.Code, sendingMessage)
+		}
+	}
 	return nil
 }
 
