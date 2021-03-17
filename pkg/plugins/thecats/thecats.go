@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/Logiase/MiraiGo-Template/bot"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/plugins"
 )
@@ -50,9 +49,9 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	}
 	var image message.IMessageElement
 	if plugins.GroupMessage == request.MessageType {
-		image, err = bot.Instance.UploadGroupImage(request.GroupCode, bytes.NewReader(b))
+		image, err = request.QQClient.UploadGroupImage(request.GroupCode, bytes.NewReader(b))
 	} else {
-		image, err = bot.Instance.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(b))
+		image, err = request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(b))
 	}
 	if err != nil {
 		return nil, err
