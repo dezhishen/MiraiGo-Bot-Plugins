@@ -52,9 +52,9 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	field, _ := v.(*message.TextElement)
 	context := field.Content
 	params := strings.Split(context, " ")
-	if len(params) > 1 {
+	if len(params) > 1 && request.MessageType == plugins.GroupMessage {
 		bucket := []byte(p.PluginInfo().ID)
-		key := []byte("calendar.enable")
+		key := []byte(fmt.Sprintf("calendar.enable.%v", request.GroupCode))
 		if "Y" == (params[1]) {
 			storage.Put(bucket, key, storage.IntToBytes(1))
 			msg += "\n已启用定时发送日历"
@@ -70,7 +70,7 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 
 // Cron cron表达式
 func (p Plugin) Cron() string {
-	return "0 0 6 * * ?"
+	return "0 33 9 * * ?"
 }
 
 // Run 回调
@@ -83,8 +83,8 @@ func (p Plugin) Run(bot *bot.Bot) error {
 		fmt.Printf("calendar send msg err %v", err)
 	}
 	bucket := []byte(p.PluginInfo().ID)
-	key := []byte("calendar.enable")
 	for _, g := range groups {
+		key := []byte(fmt.Sprintf("calendar.enable.%v", g.Code))
 		value, _ := storage.GetValue(bucket, key)
 		if value != nil && storage.BytesToInt(value) == 1 {
 			go bot.QQClient.SendGroupMessage(g.Code, sendingMessage)
