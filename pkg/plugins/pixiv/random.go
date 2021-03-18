@@ -6,13 +6,13 @@ import (
 	"net/http"
 )
 
-var randomUrl = "https://open.pixivic.net/wallpaper/%v/random?size=original&domain=https://i.pixiv.cat&webp=0&detail=1"
+var randomUrl = "https://open.pixivic.net/wallpaper/%v/random?size=%v&domain=https://i.pixiv.cat&webp=0&detail=1"
 
-func randomImage(platform string) ([]byte, error) {
+func randomImage(platform, size string) (*[]byte, error) {
 	if platform == "" {
 		platform = "mobile"
 	}
-	r, err := http.DefaultClient.Get(fmt.Sprintf(randomUrl, platform))
+	r, err := http.DefaultClient.Get(fmt.Sprintf(randomUrl, platform, size))
 	if err != nil {
 		return nil, err
 	}
@@ -21,5 +21,5 @@ func randomImage(platform string) ([]byte, error) {
 		return nil, err
 	}
 	r.Body.Close()
-	return robots, nil
+	return &robots, nil
 }
