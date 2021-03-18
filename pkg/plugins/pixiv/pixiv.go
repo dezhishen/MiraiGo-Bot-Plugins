@@ -55,6 +55,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 			var loop int
 			var err error
 			size := "large"
+			messageType := "image"
 			for i := 2; i < len(params); i++ {
 				if params[i] == "-h" || params[i] == "--help" {
 					elements = append(elements, message.NewText(".pixiv r \n-p,--pc/-m,--mobile 指定pc格式还是mobile格式 \n-original/-large/-medium/-squareMedium 指定尺寸 \n-n$num 指定数量,超过5则为5"))
@@ -92,6 +93,12 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 				if params[i] == "-squareMedium" {
 					size = "squareMedium"
 				}
+				if params[i] == "-t" {
+					messageType = "text"
+				}
+			}
+			if messageType == "text" {
+				size = "original"
 			}
 			if loop < 1 {
 				loop = 1
@@ -99,20 +106,24 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 				loop = 5
 			}
 			for i := 0; i < loop; i++ {
-				b, err := randomImage(platform, size)
+				b, err := randomImage(platform, size, messageType)
 				if err != nil {
 					return nil, err
 				}
-				var image message.IMessageElement
-				if plugins.GroupMessage == request.MessageType {
-					image, err = request.QQClient.UploadGroupImage(request.GroupCode, bytes.NewReader(*b))
+				if messageType == "image" {
+					var image message.IMessageElement
+					if plugins.GroupMessage == request.MessageType {
+						image, err = request.QQClient.UploadGroupImage(request.GroupCode, bytes.NewReader(*b))
+					} else {
+						image, err = request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(*b))
+					}
+					if err != nil {
+						return nil, err
+					}
+					elements = append(elements, image)
 				} else {
-					image, err = request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(*b))
+					elements = append(elements, message.NewText(string(*b)+"\n"))
 				}
-				if err != nil {
-					return nil, err
-				}
-				elements = append(elements, image)
 			}
 
 		}
