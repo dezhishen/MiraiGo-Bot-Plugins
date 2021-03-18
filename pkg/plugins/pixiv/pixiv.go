@@ -63,7 +63,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 						".pixiv r "+
 							"\n-p,--pc/-m,--mobile 指定pc格式还是mobile格式 "+
 							"\n-original/-large/-medium/-squareMedium 指定尺寸 "+
-							"\n-n$num 指定数量,超过5则为5"+
+							"\n-n$num 指定数量,超过10则为10"+
 							"\n-t,--text 指定返回地址而非图片"))
 					result.Elements = elements
 					return result, nil
