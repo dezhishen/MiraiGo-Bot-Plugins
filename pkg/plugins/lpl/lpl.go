@@ -41,15 +41,16 @@ func (w Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 
 func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageResponse, error) {
 	var elements []message.IMessageElement
-	result := &plugins.MessageResponse{
-		Elements: elements,
-	}
+
 	post := handleMatchMessage(w.PluginInfo().ID)
 	if unsafe.Sizeof(post) == 0 {
 		elements = append(elements, message.NewText("无可用信息"))
 	} else {
 		elements = append(elements, message.NewText(fmt.Sprintf("%s", post.TodayPost)))
 		elements = append(elements, message.NewText(fmt.Sprintf("%s", post.TommorrowPost)))
+	}
+	result := &plugins.MessageResponse{
+		Elements: elements,
 	}
 	return result, nil
 }
