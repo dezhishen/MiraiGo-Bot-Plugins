@@ -3,6 +3,7 @@ package pixiv
 import (
 	"bytes"
 	"errors"
+	"strconv"
 	"strings"
 
 	"github.com/Mrs4s/MiraiGo/message"
@@ -52,29 +53,51 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		switch command {
 		case "r":
 			var platform string
-			if len(params) > 2 {
+			var loop int
+			if len(params) == 2 {
+				platform = "mobile"
+			} else if len(params) == 3 {
+				loop, _ = strconv.Atoi(params[2])
+				if loop == 0 {
+					if params[2] == "p" {
+						platform = "pc"
+					} else if params[2] == "m" {
+						platform = "mobile"
+					} else {
+						return nil, errors.New(".pixiv r m/p 数量")
+					}
+					loop = 1
+				}
+			} else if len(params) == 4 {
 				if params[2] == "p" {
 					platform = "pc"
 				} else if params[2] == "m" {
 					platform = "mobile"
 				} else {
-					return nil, errors.New("不支持的类型,只支持 m/pc (mobile/pc)")
+					return nil, errors.New(".pixiv r m/p 数量")
+				}
+				loop, _ = strconv.Atoi(params[3])
+				if loop == 0 {
+					loop = 1
 				}
 			}
-			b, err := randomImage(platform)
-			if err != nil {
-				return nil, err
+			for i := 0; i < loop; i++ {
+				b, err := randomImage(platform)
+				if err != nil {
+					return nil, err
+				}
+				var image message.IMessageElement
+				if plugins.GroupMessage == request.MessageType {
+					image, err = request.QQClient.UploadGroupImage(request.GroupCode, bytes.NewReader(b))
+				} else {
+					image, err = request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(b))
+				}
+				if err != nil {
+					return nil, err
+				}
+				elements = append(elements, image)
 			}
-			var image message.IMessageElement
-			if plugins.GroupMessage == request.MessageType {
-				image, err = request.QQClient.UploadGroupImage(request.GroupCode, bytes.NewReader(b))
-			} else {
-				image, err = request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(b))
-			}
-			if err != nil {
-				return nil, err
-			}
-			elements = append(elements, image)
+
 		}
 	}
 	result.Elements = elements
