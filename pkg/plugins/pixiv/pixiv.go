@@ -2,6 +2,7 @@ package pixiv
 
 import (
 	"bytes"
+	"errors"
 	"strconv"
 	"strings"
 
@@ -58,10 +59,14 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 			messageType := "image"
 			for i := 2; i < len(params); i++ {
 				if params[i] == "-h" || params[i] == "--help" {
-					elements = append(elements, message.NewText(".pixiv r \n-p,--pc/-m,--mobile 指定pc格式还是mobile格式 \n-original/-large/-medium/-squareMedium 指定尺寸 \n-n$num 指定数量,超过5则为5"))
+					elements = append(elements, message.NewText(
+						".pixiv r "+
+							"\n-p,--pc/-m,--mobile 指定pc格式还是mobile格式 "+
+							"\n-original/-large/-medium/-squareMedium 指定尺寸 "+
+							"\n-n$num 指定数量,超过5则为5"+
+							"\n-t,--text 指定返回地址而非图片"))
 					result.Elements = elements
 					return result, nil
-
 				}
 				if params[i] == "-p" || params[i] == "--pc" {
 					platform = "pc"
@@ -94,7 +99,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 					size = "squareMedium"
 					continue
 				}
-				if params[i] == "-t" {
+				if params[i] == "-t" || params[i] == "--text" {
 					messageType = "text"
 				}
 			}
@@ -103,8 +108,8 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 			}
 			if loop < 1 {
 				loop = 1
-			} else if loop > 5 {
-				loop = 5
+			} else if loop > 10 {
+				loop = 10
 			}
 			for i := 0; i < loop; i++ {
 				b, err := randomImage(platform, size, messageType)
@@ -119,15 +124,18 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 						image, err = request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(*b))
 					}
 					if err != nil {
-						return nil, err
+						continue
+						// return nil, err
 					}
 					elements = append(elements, image)
 				} else {
 					elements = append(elements, message.NewText(string(*b)+"\n"))
 				}
 			}
-
 		}
+	}
+	if elements == nil || len(elements) == 0 {
+		return nil, errors.New("所有图片均发生异常")
 	}
 	result.Elements = elements
 	return result, nil
