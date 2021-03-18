@@ -26,7 +26,7 @@ func randomImage(platform, size, msgType string) (*[]byte, error) {
 		r.Body.Close()
 		return &robots, nil
 	}
-	c := http.DefaultClient
+	c := http.Client{}
 	var imageSrc []byte
 	c.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		imageSrc = []byte(req.URL.String())

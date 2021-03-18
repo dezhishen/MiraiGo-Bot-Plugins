@@ -92,6 +92,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 				}
 				if params[i] == "-squareMedium" {
 					size = "squareMedium"
+					continue
 				}
 				if params[i] == "-t" {
 					messageType = "text"
