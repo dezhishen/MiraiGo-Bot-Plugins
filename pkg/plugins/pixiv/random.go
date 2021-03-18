@@ -34,10 +34,8 @@ func randomImage(platform, size, msgType string) (*[]byte, error) {
 		return errors.New("stop by sendType")
 	}
 	_, err := c.Get(url)
-	if err != nil {
-		fmt.Println(err)
-	}
 	if imageSrc == nil {
+		fmt.Println(err)
 		return nil, errors.New("发生意外,请重试")
 	}
 	return &imageSrc, nil
