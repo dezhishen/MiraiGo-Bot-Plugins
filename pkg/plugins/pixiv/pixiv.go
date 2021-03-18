@@ -57,13 +57,17 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 			size := "large"
 			for i := 2; i < len(params); i++ {
 				if params[i] == "-h" || params[i] == "--help" {
-					elements = append(elements, message.NewText(".pixiv r -p/-m -original/-large/-medium/-squareMedium -n$num"))
+					elements = append(elements, message.NewText(".pixiv r \n-p,--pc/-m,--mobile 指定pc格式还是mobile格式 \n-original/-large/-medium/-squareMedium 指定尺寸 \n-n$num 指定数量,超过5则为5"))
 					result.Elements = elements
 					return result, nil
 
 				}
-				if params[i] == "-p" || params[i] == "-pc" {
+				if params[i] == "-p" || params[i] == "--pc" {
 					platform = "pc"
+					continue
+				}
+				if params[i] == "-m" || params[i] == "--mobile" {
+					platform = "mobile"
 					continue
 				}
 				if strings.HasPrefix(params[i], "-n") {
