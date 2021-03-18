@@ -198,11 +198,11 @@ func createMatchPost() MatchPost {
 		}
 		if matchDate.Day() == nowLocal.Day() {
 			todayInfo := createMatchInfo(game, true)
-			post.TodayPost += fmt.Sprintf(" %s  ", todayInfo)
+			post.TodayPost += fmt.Sprintf("%s\n", todayInfo)
 		}
 		if matchDate.Day() == nowLocal.Day()+1 {
 			tomorrowInfo := createMatchInfo(game, false)
-			post.TodayPost += fmt.Sprintf(" %s  ", tomorrowInfo)
+			post.TommorrowPost += fmt.Sprintf("%s\n", tomorrowInfo)
 		}
 
 	}
