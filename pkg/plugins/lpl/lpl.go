@@ -75,7 +75,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 // }
 
 func (t Plugin) Cron() string {
-	return "0 */1 * * * ?"
+	return "0 /30 * * * ? *"
 }
 
 func init() {
