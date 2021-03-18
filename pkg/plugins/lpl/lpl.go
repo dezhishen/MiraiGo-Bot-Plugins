@@ -47,6 +47,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		elements = append(elements, message.NewText("无可用信息"))
 	} else {
 		elements = append(elements, message.NewText(fmt.Sprintf("%s", post.TodayPost)))
+		elements = append(elements, message.NewText(" "))
 		elements = append(elements, message.NewText(fmt.Sprintf("%s", post.TommorrowPost)))
 	}
 	result := &plugins.MessageResponse{
@@ -186,7 +187,6 @@ func createMatchPost() MatchPost {
 	}
 
 	nowLocal := time.Now().Local()
-
 	for _, game := range mBox.GameInfo {
 
 		matchDate, err := time.Parse("2006-01-02 15:04:05", game.MatchDate)
@@ -198,11 +198,11 @@ func createMatchPost() MatchPost {
 		}
 		if matchDate.Day() == nowLocal.Day() {
 			todayInfo := createMatchInfo(game, true)
-			post.TodayPost = todayInfo
+			post.TodayPost += fmt.Sprintf(" %s  ", todayInfo)
 		}
 		if matchDate.Day() == nowLocal.Day()+1 {
 			tomorrowInfo := createMatchInfo(game, false)
-			post.TommorrowPost = tomorrowInfo
+			post.TodayPost += fmt.Sprintf(" %s  ", tomorrowInfo)
 		}
 
 	}
