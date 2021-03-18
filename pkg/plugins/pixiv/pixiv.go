@@ -2,7 +2,6 @@ package pixiv
 
 import (
 	"bytes"
-	"errors"
 	"strconv"
 	"strings"
 
@@ -52,48 +51,63 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		command := strings.TrimSpace(params[1])
 		switch command {
 		case "r":
-			var platform string
+			platform := "mobile"
 			var loop int
-			if len(params) == 2 {
-				platform = "mobile"
-			} else if len(params) == 3 {
-				loop, _ = strconv.Atoi(params[2])
-				if loop == 0 {
-					if params[2] == "p" {
-						platform = "pc"
-					} else if params[2] == "m" {
-						platform = "mobile"
-					} else {
-						return nil, errors.New(".pixiv r m/p 数量")
-					}
-					loop = 1
+			var err error
+			size := "large"
+			for i := 2; i < len(params); i++ {
+				if params[i] == "-h" || params[i] == "--help" {
+					elements = append(elements, message.NewText(".pixiv r \n-p,--pc/-m,--mobile 指定pc格式还是mobile格式 \n-original/-large/-medium/-squareMedium 指定尺寸 \n-n$num 指定数量,超过5则为5"))
+					result.Elements = elements
+					return result, nil
+
 				}
-			} else if len(params) == 4 {
-				if params[2] == "p" {
+				if params[i] == "-p" || params[i] == "--pc" {
 					platform = "pc"
-				} else if params[2] == "m" {
-					platform = "mobile"
-				} else {
-					return nil, errors.New(".pixiv r m/p 数量")
+					continue
 				}
-				loop, _ = strconv.Atoi(params[3])
-				if loop == 0 {
-					loop = 1
+				if params[i] == "-m" || params[i] == "--mobile" {
+					platform = "mobile"
+					continue
+				}
+				if strings.HasPrefix(params[i], "-n") {
+					loop, err = strconv.Atoi(strings.TrimPrefix(params[i], "-n"))
+					if err != nil {
+						return nil, err
+					}
+					continue
+				}
+				if params[i] == "-original" {
+					size = "original"
+					continue
+				}
+				if params[i] == "-large" {
+					size = "large"
+					continue
+				}
+				if params[i] == "-medium" {
+					size = "medium"
+					continue
+				}
+				if params[i] == "-squareMedium" {
+					size = "squareMedium"
 				}
 			}
-			if loop > 5 {
+			if loop < 1 {
+				loop = 1
+			} else if loop > 5 {
 				loop = 5
 			}
 			for i := 0; i < loop; i++ {
-				b, err := randomImage(platform)
+				b, err := randomImage(platform, size)
 				if err != nil {
 					return nil, err
 				}
 				var image message.IMessageElement
 				if plugins.GroupMessage == request.MessageType {
-					image, err = request.QQClient.UploadGroupImage(request.GroupCode, bytes.NewReader(b))
+					image, err = request.QQClient.UploadGroupImage(request.GroupCode, bytes.NewReader(*b))
 				} else {
-					image, err = request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(b))
+					image, err = request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(*b))
 				}
 				if err != nil {
 					return nil, err
