@@ -81,6 +81,9 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 					loop = 1
 				}
 			}
+			if loop > 5 {
+				loop = 5
+			}
 			for i := 0; i < loop; i++ {
 				b, err := randomImage(platform)
 				if err != nil {
