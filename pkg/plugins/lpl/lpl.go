@@ -47,7 +47,6 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		elements = append(elements, message.NewText("无可用信息"))
 	} else {
 		elements = append(elements, message.NewText(fmt.Sprintf("%s", post.TodayPost)))
-		elements = append(elements, message.NewText(" "))
 		elements = append(elements, message.NewText(fmt.Sprintf("%s", post.TommorrowPost)))
 	}
 	result := &plugins.MessageResponse{
