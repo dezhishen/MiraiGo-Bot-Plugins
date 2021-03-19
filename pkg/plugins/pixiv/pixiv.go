@@ -2,7 +2,6 @@ package pixiv
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -130,9 +129,10 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 					} else {
 						image, err = request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(*b))
 					}
-					// out, _ := os.Create(fmt.Sprintf("ok_%v.jpg", time.Now().Unix()))
-					// io.Copy(out, bytes.NewReader(*b))
-					// out.Close()
+					if image == nil {
+						i--
+						continue
+					}
 					if err != nil {
 						out, err := os.Create(fmt.Sprintf("%v.jpg", time.Now().Unix()))
 						if err == nil {
@@ -140,17 +140,23 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 							out.Close()
 						}
 						continue
-						// return nil, err
 					}
 					elements = append(elements, image)
 				} else {
 					elements = append(elements, message.NewText(string(*b)+"\n"))
 				}
 			}
+		case "r18":
+			res, err := randomR18()
+			if err != nil && res != nil {
+				elements = append(elements, message.NewText(fmt.Sprintf("标题:%v\n作者:%v\n原地址:https://www.pixiv.net/artworks/%v\n", res.Title, res.UserName, res.IllustID)))
+				for _, url := range res.Urls {
+					elements = append(elements, message.NewText(url+"\n"))
+				}
+			}
+		default:
+			elements = append(elements, message.NewText("错误的命令"))
 		}
-	}
-	if len(elements) == 0 {
-		return nil, errors.New("所有图片均发生异常")
 	}
 	result.Elements = elements
 	return result, nil

@@ -1,11 +1,13 @@
 package pixiv
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 )
 
 var randomUrl = "https://open.pixivic.net/wallpaper/%v/random?size=%v&domain=https://i.pixiv.cat&webp=0&detail=1"
@@ -44,4 +46,78 @@ func randomImage(platform, size, msgType string) (*[]byte, error) {
 		return nil, errors.New("发生意外,请重试")
 	}
 	return &imageSrc, nil
+}
+
+type RankingData struct {
+	Title    string `json:"title"`
+	UserId   string `json:"user_id"`
+	UserName string `json:"user_name"`
+	IllustID string `json:"illust_id"`
+	Url      string `json:"url"`
+}
+
+type PictureData struct {
+	Error             string   `json:"error"`
+	Success           bool     `json:"success"`
+	OriginalUrlsProxy []string `json:"original_urls_proxy"`
+	OriginalUrlProxy  string   `json:"original_url_proxy"`
+}
+
+type R18Result struct {
+	Title    string   `json:"title"`
+	UserId   string   `json:"userId"`
+	UserName string   `json:"userName"`
+	IllustID string   `json:"illustId"`
+	Urls     []string `json:"urls"`
+}
+
+func randomR18() (*R18Result, error) {
+	r18Url := "https://api.loli.st/pixiv/?mode=daily_r18"
+	r, err := http.DefaultClient.Get(r18Url)
+	if err != nil {
+		return nil, err
+	}
+
+	robots, err := ioutil.ReadAll(r.Body)
+	r.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	var data RankingData
+	err = json.Unmarshal(robots, &data)
+	if err != nil {
+		return nil, err
+	}
+	urlData := url.Values{
+		"p": []string{data.IllustID},
+	}
+	r, err = http.DefaultClient.PostForm("https://api.pixiv.cat/v1/generate", urlData)
+	if err != nil {
+		return nil, err
+	}
+	robots, err = ioutil.ReadAll(r.Body)
+	r.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	var pictureData PictureData
+	err = json.Unmarshal(robots, &pictureData)
+	if err != nil {
+		return nil, err
+	}
+	if !pictureData.Success {
+		return nil, errors.New(pictureData.Error)
+	}
+	result := &R18Result{
+		Title:    data.Title,
+		UserId:   data.UserId,
+		UserName: data.UserName,
+		IllustID: data.IllustID,
+	}
+	if len(pictureData.OriginalUrlsProxy) > 0 {
+		result.Urls = append(result.Urls, pictureData.OriginalUrlsProxy...)
+	} else {
+		result.Urls = append(result.Urls, pictureData.OriginalUrlProxy)
+	}
+	return result, nil
 }
