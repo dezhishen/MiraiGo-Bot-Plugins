@@ -19,6 +19,9 @@ func randomImage(platform, size, msgType string) (*[]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+		if r.StatusCode == 404 {
+			return nil, nil
+		}
 		robots, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			return nil, err
