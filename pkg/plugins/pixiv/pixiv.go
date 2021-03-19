@@ -120,6 +120,9 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 				if err != nil {
 					return nil, err
 				}
+				if b == nil {
+					continue
+				}
 				if messageType == "image" {
 					var image message.IMessageElement
 					if plugins.GroupMessage == request.MessageType {
