@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 )
 
@@ -20,6 +21,7 @@ func randomImage(platform, size, msgType string) (*[]byte, error) {
 			return nil, err
 		}
 		if r.StatusCode == 404 {
+			log.Print("发生404错误")
 			return nil, nil
 		}
 		robots, err := ioutil.ReadAll(r.Body)
