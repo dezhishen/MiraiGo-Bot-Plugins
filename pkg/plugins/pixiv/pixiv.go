@@ -130,7 +130,8 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 					if err != nil {
 						out, err := os.Create(fmt.Sprintf("%v.jpg", time.Now().Unix()))
 						if err == nil {
-							go io.Copy(out, bytes.NewReader(*b))
+							io.Copy(out, bytes.NewReader(*b))
+							out.Close()
 						}
 						continue
 						// return nil, err
