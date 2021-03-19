@@ -55,10 +55,10 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	if len(params) > 1 && request.MessageType == plugins.GroupMessage {
 		bucket := []byte(p.PluginInfo().ID)
 		key := []byte(fmt.Sprintf("calendar.enable.%v", request.GroupCode))
-		if "Y" == (params[1]) {
+		if params[1] == "Y" {
 			storage.Put(bucket, key, storage.IntToBytes(1))
 			msg += "\n已启用定时发送日历"
-		} else if "N" == (params[1]) {
+		} else if params[1] == "N" {
 			storage.Delete(bucket, key)
 			msg += "\n已禁用定时发送日历"
 		}
