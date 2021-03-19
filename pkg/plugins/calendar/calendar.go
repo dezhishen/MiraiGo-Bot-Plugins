@@ -70,7 +70,7 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 
 // Cron cron表达式
 func (p Plugin) Cron() string {
-	return "0 33 9 * * ?"
+	return "0 0 6 * * ?"
 }
 
 // Run 回调
