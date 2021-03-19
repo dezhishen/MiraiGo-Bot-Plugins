@@ -3,8 +3,12 @@ package pixiv
 import (
 	"bytes"
 	"errors"
+	"fmt"
+	"io"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/plugins"
@@ -124,6 +128,10 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 						image, err = request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(*b))
 					}
 					if err != nil {
+						out, err := os.Create(fmt.Sprintf("%v.jpg", time.Now().Unix()))
+						if err == nil {
+							go io.Copy(out, bytes.NewReader(*b))
+						}
 						continue
 						// return nil, err
 					}
