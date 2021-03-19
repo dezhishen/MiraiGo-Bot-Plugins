@@ -127,9 +127,9 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 					} else {
 						image, err = request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(*b))
 					}
-					out, _ := os.Create(fmt.Sprintf("ok_%v.jpg", time.Now().Unix()))
-					io.Copy(out, bytes.NewReader(*b))
-					out.Close()
+					// out, _ := os.Create(fmt.Sprintf("ok_%v.jpg", time.Now().Unix()))
+					// io.Copy(out, bytes.NewReader(*b))
+					// out.Close()
 					if err != nil {
 						out, err := os.Create(fmt.Sprintf("%v.jpg", time.Now().Unix()))
 						if err == nil {
@@ -146,7 +146,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 			}
 		}
 	}
-	if elements == nil || len(elements) == 0 {
+	if len(elements) == 0 {
 		return nil, errors.New("所有图片均发生异常")
 	}
 	result.Elements = elements
