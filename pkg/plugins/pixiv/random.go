@@ -63,7 +63,7 @@ type PictureData struct {
 	OriginalUrlProxy  string   `json:"original_url_proxy"`
 }
 
-type R18Result struct {
+type Picture struct {
 	Title    string   `json:"title"`
 	UserId   string   `json:"userId"`
 	UserName string   `json:"userName"`
@@ -71,7 +71,58 @@ type R18Result struct {
 	Urls     []string `json:"urls"`
 }
 
-func randomR18() (*R18Result, error) {
+func random() (*Picture, error) {
+	randomUrl := "https://api.loli.st/pixiv/random.php?type=json&r18=true"
+	r, err := http.DefaultClient.Get(randomUrl)
+	if err != nil {
+		return nil, err
+	}
+
+	robots, err := ioutil.ReadAll(r.Body)
+	r.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	var data RankingData
+	err = json.Unmarshal(robots, &data)
+	if err != nil {
+		return nil, err
+	}
+	urlData := url.Values{
+		"p": []string{data.IllustID},
+	}
+	r, err = http.DefaultClient.PostForm("https://api.pixiv.cat/v1/generate", urlData)
+	if err != nil {
+		return nil, err
+	}
+	robots, err = ioutil.ReadAll(r.Body)
+	r.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	var pictureData PictureData
+	err = json.Unmarshal(robots, &pictureData)
+	if err != nil {
+		return nil, err
+	}
+	if !pictureData.Success {
+		return nil, errors.New(pictureData.Error)
+	}
+	result := &Picture{
+		Title:    data.Title,
+		UserId:   data.UserId,
+		UserName: data.UserName,
+		IllustID: data.IllustID,
+	}
+	if len(pictureData.OriginalUrlsProxy) > 0 {
+		result.Urls = append(result.Urls, pictureData.OriginalUrlsProxy...)
+	} else {
+		result.Urls = append(result.Urls, pictureData.OriginalUrlProxy)
+	}
+	return result, nil
+}
+
+func randomR18() (*Picture, error) {
 	r18Url := "https://api.loli.st/pixiv/?mode=daily_r18"
 	r, err := http.DefaultClient.Get(r18Url)
 	if err != nil {
@@ -108,7 +159,7 @@ func randomR18() (*R18Result, error) {
 	if !pictureData.Success {
 		return nil, errors.New(pictureData.Error)
 	}
-	result := &R18Result{
+	result := &Picture{
 		Title:    data.Title,
 		UserId:   data.UserId,
 		UserName: data.UserName,
