@@ -8,6 +8,9 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"time"
+
+	"github.com/dezhiShen/MiraiGo-Bot/pkg/cache"
 )
 
 var randomUrl = "https://open.pixivic.net/wallpaper/%v/random?size=%v&domain=https://i.pixiv.cat&webp=0&detail=1"
@@ -122,7 +125,7 @@ func random() (*Picture, error) {
 	return result, nil
 }
 
-func randomR18() (*Picture, error) {
+func getRank() (*RankingData, error) {
 	r18Url := "https://api.loli.st/pixiv/?mode=daily_r18"
 	r, err := http.DefaultClient.Get(r18Url)
 	if err != nil {
@@ -136,17 +139,32 @@ func randomR18() (*Picture, error) {
 	}
 	var data RankingData
 	err = json.Unmarshal(robots, &data)
-	if err != nil {
-		return nil, err
+	return &data, err
+}
+
+func randomR18(key string) (*Picture, error) {
+	var data *RankingData
+	var err error
+	for i := 0; i < 10; i++ {
+		data, err = getRank()
+		if err != nil {
+			return nil, err
+		}
+		theKey := fmt.Sprintf("pixiv_r18_exists.%v.%v", key, data.IllustID)
+		v, ok := cache.Get(theKey)
+		if !ok || v == "N" {
+			cache.Set(theKey, "Y", 30*time.Minute)
+			break
+		}
 	}
 	urlData := url.Values{
 		"p": []string{data.IllustID},
 	}
-	r, err = http.DefaultClient.PostForm("https://api.pixiv.cat/v1/generate", urlData)
+	r, err := http.DefaultClient.PostForm("https://api.pixiv.cat/v1/generate", urlData)
 	if err != nil {
 		return nil, err
 	}
-	robots, err = ioutil.ReadAll(r.Body)
+	robots, err := ioutil.ReadAll(r.Body)
 	r.Body.Close()
 	if err != nil {
 		return nil, err

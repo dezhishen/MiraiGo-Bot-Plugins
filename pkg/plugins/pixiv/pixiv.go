@@ -170,7 +170,13 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 			// 	}
 			// }
 		case "r18":
-			res, err := randomR18()
+			var cacheKey string
+			if plugins.GroupMessage == request.MessageType {
+				cacheKey = fmt.Sprintf("%v%v", request.MessageType, request.GroupCode)
+			} else {
+				cacheKey = fmt.Sprintf("%v%v", request.MessageType, request.Sender.Uin)
+			}
+			res, err := randomR18(string(cacheKey))
 			if err == nil && res != nil {
 				elements = append(elements, message.NewText(fmt.Sprintf("标题:%v\n作者:%v\n原地址:https://www.pixiv.net/artworks/%v\n", res.Title, res.UserName, res.IllustID)))
 				for _, url := range res.Urls {
