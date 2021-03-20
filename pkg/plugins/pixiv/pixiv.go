@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -151,20 +153,20 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 			if err == nil && res != nil {
 				elements = append(elements, message.NewText(fmt.Sprintf("标题:%v\n作者:%v\n原地址:https://www.pixiv.net/artworks/%v\n", res.Title, res.UserName, res.IllustID)))
 				for _, url := range res.Urls {
-					// r, _ := http.DefaultClient.Get(url)
-					// robots, _ := ioutil.ReadAll(r.Body)
-					// r.Body.Close()
-					// var image message.IMessageElement
-					// if plugins.GroupMessage == request.MessageType {
-					// 	image, err = request.QQClient.UploadGroupImage(request.GroupCode, bytes.NewReader(robots))
-					// } else {
-					// 	image, err = request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(robots))
-					// }
-					// if err != nil {
-					// 	log.Print(err)
-					// }
-					// elements = append(elements, image)
-					elements = append(elements, message.NewText("\n"+url+"\n"))
+					r, _ := http.DefaultClient.Get(url)
+					robots, _ := ioutil.ReadAll(r.Body)
+					r.Body.Close()
+					var image message.IMessageElement
+					if plugins.GroupMessage == request.MessageType {
+						elements = append(elements, message.NewText("\n"+url+"\n"))
+					} else {
+						image, err = request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(robots))
+						if err != nil {
+							elements = append(elements, message.NewText("\n"+url+"\n"))
+						} else {
+							elements = append(elements, image)
+						}
+					}
 				}
 			}
 		default:
