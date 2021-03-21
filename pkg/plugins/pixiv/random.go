@@ -153,7 +153,7 @@ func randomR18(key string) (*Picture, error) {
 		theKey := fmt.Sprintf("pixiv_r18_exists.%v.%v", key, data.IllustID)
 		v, ok := cache.Get(theKey)
 		if !ok || v == "N" {
-			cache.Set(theKey, "Y", 30*time.Minute)
+			cache.Set(theKey, "Y", 24*time.Hour)
 			break
 		}
 	}
