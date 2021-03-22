@@ -26,7 +26,7 @@ var pluginID = "caihongpi"
 func (p Plugin) PluginInfo() *plugins.PluginInfo {
 	return &plugins.PluginInfo{
 		ID:   pluginID,
-		Name: "毒鸡汤",
+		Name: "彩虹屁",
 	}
 }
 
