@@ -16,7 +16,10 @@ import (
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/tips"
 
 	// _ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/vader"
+	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/caihongpi"
+	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/dujitang"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/weather"
+
 	// _ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/weibolisten"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/server"
 )
