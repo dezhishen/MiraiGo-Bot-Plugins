@@ -47,7 +47,11 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	if err != nil {
 		return nil, err
 	}
-	result.Elements = append(result.Elements, message.NewText(dujitang))
+	result.Elements = append(result.Elements, message.NewText(fmt.Sprintf(
+		"For %v : %v",
+		request.GetNickName(),
+		dujitang,
+	)))
 	return result, nil
 }
 
