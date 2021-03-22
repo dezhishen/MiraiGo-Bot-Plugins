@@ -162,6 +162,7 @@ func (p Plugin) Run(bot *bot.Bot) error {
 				}
 				elements = append(elements, image)
 			}
+			elements = append(elements, message.NewText("\n来自定时发送,可以发送[.pixiv r N]关闭"))
 			sendingMessage.Elements = elements
 			go bot.QQClient.SendGroupMessage(g.Code, sendingMessage)
 		}
