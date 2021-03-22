@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/Logiase/MiraiGo-Template/bot"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/plugins"
+	"github.com/dezhiShen/MiraiGo-Bot/pkg/storage"
 )
 
 // Plugin  Pixiv助手插件
@@ -78,97 +80,17 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 					}
 				}
 			}
-			// platform := "mobile"
-			// var loop int
-			// var err error
-			// size := "large"
-			// messageType := "image"
-			// for i := 2; i < len(params); i++ {
-			// 	if params[i] == "-h" || params[i] == "--help" {
-			// 		elements = append(elements, message.NewText(
-			// 			".pixiv r "+
-			// 				"\n-p,--pc/-m,--mobile 指定pc格式还是mobile格式 "+
-			// 				"\n-original/-large/-medium/-squareMedium 指定尺寸 "+
-			// 				"\n-n$num 指定数量,超过10则为10"+
-			// 				"\n-t,--text 指定返回地址而非图片"))
-			// 		result.Elements = elements
-			// 		return result, nil
-			// 	}
-			// 	if params[i] == "-p" || params[i] == "--pc" {
-			// 		platform = "pc"
-			// 		continue
-			// 	}
-			// 	if params[i] == "-m" || params[i] == "--mobile" {
-			// 		platform = "mobile"
-			// 		continue
-			// 	}
-			// 	if strings.HasPrefix(params[i], "-n") {
-			// 		loop, err = strconv.Atoi(strings.TrimPrefix(params[i], "-n"))
-			// 		if err != nil {
-			// 			return nil, err
-			// 		}
-			// 		continue
-			// 	}
-			// 	if params[i] == "-original" {
-			// 		size = "original"
-			// 		continue
-			// 	}
-			// 	if params[i] == "-large" {
-			// 		size = "large"
-			// 		continue
-			// 	}
-			// 	if params[i] == "-medium" {
-			// 		size = "medium"
-			// 		continue
-			// 	}
-			// 	if params[i] == "-squareMedium" {
-			// 		size = "squareMedium"
-			// 		continue
-			// 	}
-			// 	if params[i] == "-t" || params[i] == "--text" {
-			// 		messageType = "text"
-			// 	}
-			// }
-			// if messageType == "text" {
-			// 	size = "original"
-			// }
-			// if loop < 1 {
-			// 	loop = 1
-			// } else if loop > 10 {
-			// 	loop = 10
-			// }
-			// for i := 0; i < loop; i++ {
-			// 	b, err := randomImage(platform, size, messageType)
-			// 	if err != nil {
-			// 		return nil, err
-			// 	}
-			// 	if b == nil {
-			// 		continue
-			// 	}
-			// 	if messageType == "image" {
-			// 		var image message.IMessageElement
-			// 		if plugins.GroupMessage == request.MessageType {
-			// 			image, err = request.QQClient.UploadGroupImage(request.GroupCode, bytes.NewReader(*b))
-			// 		} else {
-			// 			image, err = request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(*b))
-			// 		}
-			// 		if image == nil {
-			// 			i--
-			// 			continue
-			// 		}
-			// 		if err != nil {
-			// 			out, err := os.Create(fmt.Sprintf("%v.jpg", time.Now().Unix()))
-			// 			if err == nil {
-			// 				io.Copy(out, bytes.NewReader(*b))
-			// 				out.Close()
-			// 			}
-			// 			continue
-			// 		}
-			// 		elements = append(elements, image)
-			// 	} else {
-			// 		elements = append(elements, message.NewText(string(*b)+"\n"))
-			// 	}
-			// }
+			if plugins.GroupMessage == request.MessageType && len(params) > 2 {
+				bucket := []byte(w.PluginInfo().ID)
+				key := []byte(fmt.Sprintf("pixiv.enable.%v", request.GroupCode))
+				if params[2] == "Y" {
+					storage.Put(bucket, key, storage.IntToBytes(1))
+					elements = append(elements, message.NewText("\n已开启定时发送"))
+				} else if params[2] == "N" {
+					storage.Delete(bucket, key)
+					elements = append(elements, message.NewText("\n已关闭定时发送"))
+				}
+			}
 		case "r18":
 			var cacheKey string
 			if plugins.GroupMessage == request.MessageType {
@@ -202,4 +124,45 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	}
 	result.Elements = elements
 	return result, nil
+}
+
+// Cron cron表达式
+func (p Plugin) Cron() string {
+	return "0 */5 * * * ?"
+}
+
+// Run 回调
+func (p Plugin) Run(bot *bot.Bot) error {
+	bucket := []byte(p.PluginInfo().ID)
+	groups, err := bot.GetGroupList()
+	if err != nil {
+		fmt.Printf("pixiv r send msg err %v", err)
+	}
+	for _, g := range groups {
+		key := []byte(fmt.Sprintf("pixiv.enable.%v", g.Code))
+		value, _ := storage.GetValue(bucket, key)
+		if value != nil && storage.BytesToInt(value) == 1 {
+			sendingMessage := &message.SendingMessage{}
+			var elements []message.IMessageElement
+			res, err := random()
+			if err != nil {
+				continue
+			}
+			elements = append(elements, message.NewText(fmt.Sprintf("标题:%v\n作者:%v\n原地址:https://www.pixiv.net/artworks/%v\n", res.Title, res.UserName, res.IllustID)))
+			for _, url := range res.Urls {
+				r, _ := http.DefaultClient.Get(url)
+				robots, _ := ioutil.ReadAll(r.Body)
+				defer r.Body.Close()
+				var image message.IMessageElement
+				image, err = bot.UploadGroupImage(g.Code, bytes.NewReader(robots))
+				if err != nil {
+					continue
+				}
+				elements = append(elements, image)
+			}
+			sendingMessage.Elements = elements
+			go bot.QQClient.SendGroupMessage(g.Code, sendingMessage)
+		}
+	}
+	return nil
 }
