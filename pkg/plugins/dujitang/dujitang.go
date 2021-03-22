@@ -59,7 +59,7 @@ var url = "https://api.muxiaoguo.cn/api/dujitang?api_key=%v"
 
 type resp struct {
 	Data *data  `json:"data"`
-	Code int    `json:"code"`
+	Code string `json:"code"`
 	Msg  string `json:"msg"`
 }
 
@@ -86,7 +86,7 @@ func getDujitang() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if resp.Code != 200 {
+	if resp.Code != "200" {
 		return "", errors.New(resp.Msg)
 	}
 	return resp.Data.Comment, nil
