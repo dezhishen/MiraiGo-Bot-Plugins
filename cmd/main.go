@@ -9,7 +9,8 @@ import (
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/mc"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/pixiv"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/random"
-	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/tiangou"
+
+	// _ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/tiangou"
 
 	// _ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/segmentation"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/thecats"
