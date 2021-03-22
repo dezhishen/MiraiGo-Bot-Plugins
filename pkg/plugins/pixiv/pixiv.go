@@ -21,7 +21,9 @@ type Plugin struct {
 }
 
 func init() {
-	plugins.RegisterOnMessagePlugin(Plugin{})
+	p := Plugin{}
+	plugins.RegisterOnMessagePlugin(p)
+	plugins.RegisterSchedulerPlugin(p)
 }
 
 // PluginInfo PluginInfo
