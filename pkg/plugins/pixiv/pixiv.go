@@ -142,6 +142,7 @@ func (p Plugin) Cron() string {
 // Run 回调
 func (p Plugin) Run(bot *bot.Bot) error {
 	bucket := []byte(p.PluginInfo().ID)
+	bot.ReloadGroupList()
 	groups, err := bot.GetGroupList()
 	if err != nil {
 		fmt.Printf("pixiv r send msg err %v", err)
