@@ -57,7 +57,13 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		command := strings.TrimSpace(params[1])
 		switch command {
 		case "r":
-			res, err := random()
+			var cacheKey string
+			if plugins.GroupMessage == request.MessageType {
+				cacheKey = fmt.Sprintf("%v%v", request.MessageType, request.GroupCode)
+			} else {
+				cacheKey = fmt.Sprintf("%v%v", request.MessageType, request.Sender.Uin)
+			}
+			res, err := random(cacheKey)
 			if err == nil && res != nil {
 				elements = append(elements, message.NewText(fmt.Sprintf("标题:%v\n作者:%v\n原地址:https://www.pixiv.net/artworks/%v\n", res.Title, res.UserName, res.IllustID)))
 				for _, url := range res.Urls {
@@ -144,9 +150,10 @@ func (p Plugin) Run(bot *bot.Bot) error {
 		key := []byte(fmt.Sprintf("pixiv.enable.%v", g.Code))
 		value, _ := storage.GetValue(bucket, key)
 		if value != nil && storage.BytesToInt(value) == 1 {
+			cacheKey := fmt.Sprintf("%v%v", plugins.GroupMessage, g.Code)
 			sendingMessage := &message.SendingMessage{}
 			var elements []message.IMessageElement
-			res, err := random()
+			res, err := random(cacheKey)
 			if err != nil {
 				continue
 			}

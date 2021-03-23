@@ -74,7 +74,7 @@ type Picture struct {
 	Urls     []string `json:"urls"`
 }
 
-func random() (*Picture, error) {
+func randomAImage() (*RankingData, error) {
 	randomUrl := "https://api.loli.st/pixiv/random.php?type=json&r18=true"
 	r, err := http.DefaultClient.Get(randomUrl)
 	if err != nil {
@@ -88,17 +88,32 @@ func random() (*Picture, error) {
 	}
 	var data RankingData
 	err = json.Unmarshal(robots, &data)
-	if err != nil {
-		return nil, err
+	return &data, err
+}
+
+func random(key string) (*Picture, error) {
+	var data *RankingData
+	var err error
+	for i := 0; i < 10; i++ {
+		data, err = randomAImage()
+		if err != nil {
+			return nil, err
+		}
+		theKey := fmt.Sprintf("pixiv_exists.%v.%v", key, data.IllustID)
+		v, ok := cache.Get(theKey)
+		if !ok || v == "N" {
+			cache.Set(theKey, "Y", 24*time.Hour)
+			break
+		}
 	}
 	urlData := url.Values{
 		"p": []string{data.IllustID},
 	}
-	r, err = http.DefaultClient.PostForm("https://api.pixiv.cat/v1/generate", urlData)
+	r, err := http.DefaultClient.PostForm("https://api.pixiv.cat/v1/generate", urlData)
 	if err != nil {
 		return nil, err
 	}
-	robots, err = ioutil.ReadAll(r.Body)
+	robots, err := ioutil.ReadAll(r.Body)
 	r.Body.Close()
 	if err != nil {
 		return nil, err
