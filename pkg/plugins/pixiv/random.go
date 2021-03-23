@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -13,43 +12,43 @@ import (
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/cache"
 )
 
-var randomUrl = "https://open.pixivic.net/wallpaper/%v/random?size=%v&domain=https://i.pixiv.cat&webp=0&detail=1"
+// var randomUrl = "https://open.pixivic.net/wallpaper/%v/random?size=%v&domain=https://i.pixiv.cat&webp=0&detail=1"
 
-func randomImage(platform, size, msgType string) (*[]byte, error) {
-	url := fmt.Sprintf(randomUrl, platform, size)
-	if msgType == "image" {
-		if platform == "" {
-			platform = "mobile"
-		}
-		r, err := http.DefaultClient.Get(url)
-		if err != nil {
-			return nil, err
-		}
-		if r.StatusCode == 404 {
-			log.Print("发生404错误")
-			return nil, nil
-		}
-		robots, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			return nil, err
-		}
-		r.Body.Close()
-		return &robots, nil
-	}
-	c := http.Client{}
-	var imageSrc []byte
-	c.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-		imageSrc = []byte(req.URL.String())
-		fmt.Print(req.URL.String())
-		return errors.New("stop by sendType")
-	}
-	_, err := c.Get(url)
-	if imageSrc == nil {
-		fmt.Println(err)
-		return nil, errors.New("发生意外,请重试")
-	}
-	return &imageSrc, nil
-}
+// func randomImage(platform, size, msgType string) (*[]byte, error) {
+// 	url := fmt.Sprintf(randomUrl, platform, size)
+// 	if msgType == "image" {
+// 		if platform == "" {
+// 			platform = "mobile"
+// 		}
+// 		r, err := http.DefaultClient.Get(url)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		if r.StatusCode == 404 {
+// 			log.Print("发生404错误")
+// 			return nil, nil
+// 		}
+// 		robots, err := ioutil.ReadAll(r.Body)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		r.Body.Close()
+// 		return &robots, nil
+// 	}
+// 	c := http.Client{}
+// 	var imageSrc []byte
+// 	c.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+// 		imageSrc = []byte(req.URL.String())
+// 		fmt.Print(req.URL.String())
+// 		return errors.New("stop by sendType")
+// 	}
+// 	_, err := c.Get(url)
+// 	if imageSrc == nil {
+// 		fmt.Println(err)
+// 		return nil, errors.New("发生意外,请重试")
+// 	}
+// 	return &imageSrc, nil
+// }
 
 type RankingData struct {
 	Title    string `json:"title"`
@@ -100,8 +99,8 @@ func random(key string) (*Picture, error) {
 			return nil, err
 		}
 		theKey := fmt.Sprintf("pixiv_exists.%v.%v", key, data.IllustID)
-		v, ok := cache.Get(theKey)
-		if !ok || v == "N" {
+		_, ok := cache.Get(theKey)
+		if !ok {
 			cache.Set(theKey, "Y", 24*time.Hour)
 			break
 		}
@@ -166,8 +165,8 @@ func randomR18(key string) (*Picture, error) {
 			return nil, err
 		}
 		theKey := fmt.Sprintf("pixiv_r18_exists.%v.%v", key, data.IllustID)
-		v, ok := cache.Get(theKey)
-		if !ok || v == "N" {
+		_, ok := cache.Get(theKey)
+		if !ok {
 			cache.Set(theKey, "Y", 24*time.Hour)
 			break
 		}
