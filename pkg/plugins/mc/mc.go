@@ -127,7 +127,7 @@ func getFile(url string) ([]byte, error) {
 
 func getFileName(url string) string {
 	i := strings.LastIndex(url, "/")
-	return url[i:]
+	return url[i+1:]
 }
 
 func pathExists(path string) (bool, error) {
