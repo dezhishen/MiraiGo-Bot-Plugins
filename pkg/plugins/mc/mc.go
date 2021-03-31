@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -62,6 +63,10 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 }
 
 func init() {
+	exists, _ := pathExists("./mc")
+	if !exists {
+		os.Mkdir("./mc", 0777)
+	}
 	plugins.RegisterOnMessagePlugin(Plugin{})
 }
 
@@ -127,7 +132,7 @@ func getFile(url string) ([]byte, error) {
 
 func getFileName(url string) string {
 	i := strings.LastIndex(url, "/")
-	return url[i+1:]
+	return fmt.Sprintf("./mc/%v", url[i+1:])
 }
 
 func pathExists(path string) (bool, error) {
