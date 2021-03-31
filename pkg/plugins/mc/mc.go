@@ -92,11 +92,12 @@ func randomImage() (*[]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer r.Body.Close()
 	if resp.Code != "200" {
 		return nil, errors.New("请求接口失败")
 	}
-	r.Body.Close()
-	return &robots, nil
+	b, e := getFile(resp.ImgUrl)
+	return &b, e
 }
 
 func getFile(url string) ([]byte, error) {
@@ -110,7 +111,7 @@ func getFile(url string) ([]byte, error) {
 		}
 		defer file.Close()
 		content, err := ioutil.ReadAll(file)
-		return content, nil
+		return content, err
 	}
 	r, err := http.DefaultClient.Get(url)
 	if err != nil {
