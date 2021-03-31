@@ -106,8 +106,8 @@ func randomImage() (*[]byte, error) {
 }
 
 func getFile(url string) ([]byte, error) {
+	// url = strings.Replace(url, "large", "original", -1)
 	path := getFileName(url)
-
 	exists, _ := pathExists(path)
 	if exists {
 		file, err := os.Open(path)
