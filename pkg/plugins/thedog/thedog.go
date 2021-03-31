@@ -33,7 +33,7 @@ func (w Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 	if len(msg.Elements) == 1 && msg.Elements[0].Type() == message.Text {
 		v := msg.Elements[0]
 		field, ok := v.(*message.TextElement)
-		return ok && field.Content == ".thedog"
+		return ok && (field.Content == ".thedog" || field.Content == ".dog")
 	}
 	return false
 }

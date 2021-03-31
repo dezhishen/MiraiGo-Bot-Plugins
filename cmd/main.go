@@ -13,7 +13,7 @@ import (
 	// _ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/tiangou"
 
 	// _ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/segmentation"
-	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/thecats"
+	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/thecat"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/thedog"
 
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/tips"
