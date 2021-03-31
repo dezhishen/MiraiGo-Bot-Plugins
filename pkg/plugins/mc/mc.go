@@ -2,6 +2,7 @@ package mc
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -64,15 +65,21 @@ func init() {
 	plugins.RegisterOnMessagePlugin(Plugin{})
 }
 
-var randomUrl = "https://api.ixiaowai.cn/mcapi/mcapi.php?return=json"
-
 type Resp struct {
 	ImgUrl string `json:"imgurl"`
 	Code   string `json:"code"`
 }
 
+var randomUrl = "https://api.ixiaowai.cn/mcapi/mcapi.php?return=json"
+
+var client = http.Client{
+	Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	},
+}
+
 func randomImage() (*[]byte, error) {
-	r, err := http.DefaultClient.Get(randomUrl)
+	r, err := client.Get(randomUrl)
 	if err != nil {
 		return nil, err
 	}
