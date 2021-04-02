@@ -71,10 +71,6 @@ func getSetu() (*ImageForSend, error) {
 		return nil, errors.New(resp.Msg)
 	}
 
-	r, err = http.Get(resp.Data.Large)
-	if err != nil {
-		return nil, err
-	}
 	result := &ImageForSend{}
 	result.IllustID = resp.Data.Illust
 	result.UserName = resp.Data.User.Name
@@ -97,6 +93,7 @@ func getImages(resp *Resp) *[]*[]byte {
 func getImage(id string, index int, url string) (*[]byte, error) {
 	path := fmt.Sprintf("./pixiv/%v", id)
 	fileName := getFileName(url)
+	fileName = strings.ReplaceAll(fileName, fmt.Sprintf("%v_%v_", id, index), "")
 	filePath := fmt.Sprintf("%v/%v", path, fileName)
 	ok, _ := pathExists(filePath)
 	if ok {
