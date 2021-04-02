@@ -50,17 +50,22 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	}
 	elements = append(elements, message.NewText(fmt.Sprintf("标题:%v\n作者:%v\n原地址:https://www.pixiv.net/artworks/%v\n", res.Title, res.UserName, res.IllustID)))
 	if plugins.GroupMessage == request.MessageType {
-		image, err := request.QQClient.UploadGroupImage(request.GroupCode, bytes.NewReader(*res.Image))
-		if err != nil {
-			return nil, err
+		for _, image := range *res.Images {
+			imageElement, err := request.QQClient.UploadGroupImage(request.GroupCode, bytes.NewReader(*image))
+			if err != nil {
+				return nil, err
+			}
+			elements = append(elements, imageElement)
 		}
-		elements = append(elements, image)
+
 	} else {
-		image, err := request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(*res.Image))
-		if err != nil {
-			return nil, err
+		for _, image := range *res.Images {
+			imageElement, err := request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(*image))
+			if err != nil {
+				return nil, err
+			}
+			elements = append(elements, imageElement)
 		}
-		elements = append(elements, image)
 	}
 	result.Elements = elements
 	return result, nil
