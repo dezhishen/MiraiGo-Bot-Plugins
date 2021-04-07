@@ -91,10 +91,12 @@ func getImages(resp *Resp) *[]*[]byte {
 }
 
 func getImage(id string, index int, url string) (*[]byte, error) {
-	path := fmt.Sprintf("./pixiv/%v", id)
-	fileName := getFileName(url)
-	fileName = strings.ReplaceAll(fileName, fmt.Sprintf("%v_%v_", id, index), "")
-	filePath := fmt.Sprintf("%v_%v", path, fileName)
+	path := "./pixiv"
+	// fmt.Sprintf("/%v", id)
+	// fileName := getFileName(url)
+	i := strings.LastIndex(url, ".")
+	fileName := fmt.Sprintf("%v_%v.%v", id, index, url[i+1:])
+	filePath := fmt.Sprintf("%v/%v", path, fileName)
 	ok, _ := pathExists(filePath)
 	if ok {
 		file, err := os.Open(filePath)
