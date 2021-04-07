@@ -120,7 +120,7 @@ func getImage(id string, index int, url string) (*[]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	ioutil.WriteFile(filePath, robots, 0644)
+	ioutil.WriteFile(filePath, robots, 0777)
 	return &robots, nil
 }
 
