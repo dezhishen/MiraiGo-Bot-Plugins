@@ -94,7 +94,7 @@ func getImage(id string, index int, url string) (*[]byte, error) {
 	path := fmt.Sprintf("./pixiv/%v", id)
 	fileName := getFileName(url)
 	fileName = strings.ReplaceAll(fileName, fmt.Sprintf("%v_%v_", id, index), "")
-	filePath := fmt.Sprintf("%v/%v", path, fileName)
+	filePath := fmt.Sprintf("%v_%v", path, fileName)
 	ok, _ := pathExists(filePath)
 	if ok {
 		file, err := os.Open(filePath)
@@ -104,9 +104,7 @@ func getImage(id string, index int, url string) (*[]byte, error) {
 		defer file.Close()
 		content, err := ioutil.ReadAll(file)
 		return &content, err
-
 	}
-
 	exists, _ := pathExists(path)
 	if !exists {
 		os.Mkdir(path, 0777)
