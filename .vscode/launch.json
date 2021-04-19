@@ -10,7 +10,8 @@
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceFolder}/cmd/main.go",
-      "cwd":"${workspaceFolder}"
+      "cwd":"${workspaceFolder}",
+      "env": {"BOT_PIXIV_TOKEN":"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJTZG5pdSIsInV1aWQiOiJjNTQ3OGY3MGUxY2E0NmVjODJiOTNiZGVlOWNiYjU2MSIsImlhdCI6MTYxNzA5Mjk0MSwiYWNjb3VudCI6IntcImVtYWlsXCI6XCIxMTc5NTUxOTYwQHFxLmNvbVwiLFwiZ2VuZGVyXCI6LTEsXCJoYXNQcm9uXCI6MCxcImlkXCI6ODE2LFwicGFzc1dvcmRcIjpcIjFkZmViY2NjNmJjNzI4ZTc1MGExZjQ1MjhlY2Q2NjcxXCIsXCJzdGF0dXNcIjowLFwidXNlck5hbWVcIjpcIlNkbml1XCJ9IiwianRpIjoiODE2In0.VgJxTsHwXLMRApBXEW0WOuicsoc3WLLT6BrcN4lmeDk"}
     }
   ]
 

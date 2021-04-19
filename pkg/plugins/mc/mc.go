@@ -2,8 +2,14 @@ package mc
 
 import (
 	"bytes"
+	"crypto/tls"
+	"encoding/json"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"strings"
 
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/plugins"
@@ -57,13 +63,28 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 }
 
 func init() {
+	exists, _ := pathExists("./mc")
+	if !exists {
+		os.Mkdir("./mc", 0777)
+	}
 	plugins.RegisterOnMessagePlugin(Plugin{})
 }
 
-var randomUrl = "https://api.ixiaowai.cn/mcapi/mcapi.php"
+type Resp struct {
+	ImgUrl string `json:"imgurl"`
+	Code   string `json:"code"`
+}
+
+var randomUrl = "https://api.ixiaowai.cn/mcapi/mcapi.php?return=json"
+
+var client = http.Client{
+	Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	},
+}
 
 func randomImage() (*[]byte, error) {
-	r, err := http.DefaultClient.Get(randomUrl)
+	r, err := client.Get(randomUrl)
 	if err != nil {
 		return nil, err
 	}
@@ -71,6 +92,56 @@ func randomImage() (*[]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	r.Body.Close()
-	return &robots, nil
+	var resp Resp
+	err = json.Unmarshal(robots, &resp)
+	if err != nil {
+		return nil, err
+	}
+	defer r.Body.Close()
+	if resp.Code != "200" {
+		return nil, errors.New("请求接口失败")
+	}
+	b, e := getFile(resp.ImgUrl)
+	return &b, e
+}
+
+func getFile(url string) ([]byte, error) {
+	// url = strings.Replace(url, "large", "original", -1)
+	path := getFileName(url)
+	exists, _ := pathExists(path)
+	if exists {
+		file, err := os.Open(path)
+		if err != nil {
+			panic(err)
+		}
+		defer file.Close()
+		content, err := ioutil.ReadAll(file)
+		return content, err
+	}
+	r, err := http.DefaultClient.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	content, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	_ = ioutil.WriteFile(path, content, 0644)
+	return content, err
+}
+
+func getFileName(url string) string {
+	i := strings.LastIndex(url, "/")
+	return fmt.Sprintf("./mc/%v", url[i+1:])
+}
+
+func pathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
 }
