@@ -8,4 +8,5 @@ WORKDIR /build
 COPY ./ .
 RUN cd /build && go build -tags netgo -o miraigo cmd/main.go && cp /build/miraigo /usr/bin/miraigo && chmod +x /usr/bin/miraigo
 WORKDIR /data
+VOLUME /data
 ENTRYPOINT ["/usr/bin/miraigo"]
