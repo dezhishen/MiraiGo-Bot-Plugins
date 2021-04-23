@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bot
+---
+apiVersion: apps/v1        # 1.9.0 之前的版本使用 apps/v1beta2，可通过命令 kubectl api-versions 查看
+kind: Deployment           #指定创建资源的角色/类型
+metadata:                  #资源的元数据/属性
+  name: miraigo       #资源的名字，在同一个namespace中必须唯一
+  namespace:  bot            #命名空间
+  labels:
+    app: miraigo                  #标签
+spec:
+  replicas: 1         #副本数量3
+  strategy:
+    rollingUpdate:   ##由于replicas为3,则整个升级,pod个数在2-4个之间
+      maxSurge: 1      #滚动升级时会先启动1个pod
+      maxUnavailable: 1 #滚动升级时允许的最大Unavailable的pod个数
+  selector:             #定义标签选择器,部署需要管理的pod（带有该标签的的会被管理）需在pod 模板中定义
+    matchLabels:
+      app: miraigo
+  template:      #这里Pod的定义
+    metadata:
+      labels:    #Pod的label
+        app: miraigo
+    spec:        # 模板的规范
+      containers:
+        - name: miraigo
+          image: dezhishen/miraigo-bot:0.1
+          imagePullPolicy: IfNotPresent
+          env:                    ##通过环境变量的方式，直接传递pod=自定义Linux OS环境变量
+            - name: TZ     #本地Key
+              value: Asia/Shanghai
+            - name: LANG     #本地Key
+              value: zh_CN.UTF-8
+            - name: BOT_PIXIV_TOKEN
+              value: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJTZG5pdSIsInV1aWQiOiJjNTQ3OGY3MGUxY2E0NmVjODJiOTNiZGVlOWNiYjU2MSIsImlhdCI6MTYxNzA5Mjk0MSwiYWNjb3VudCI6IntcImVtYWlsXCI6XCIxMTc5NTUxOTYwQHFxLmNvbVwiLFwiZ2VuZGVyXCI6LTEsXCJoYXNQcm9uXCI6MCxcImlkXCI6ODE2LFwicGFzc1dvcmRcIjpcIjFkZmViY2NjNmJjNzI4ZTc1MGExZjQ1MjhlY2Q2NjcxXCIsXCJzdGF0dXNcIjowLFwidXNlck5hbWVcIjpcIlNkbml1XCJ9IiwianRpIjoiODE2In0.VgJxTsHwXLMRApBXEW0WOuicsoc3WLLT6BrcN4lmeDk
+            - name: BOT_DJT_KEY
+              value: 9bc86e70f1c8f0d9
+            - name: BOT_CHP_KEY
+              value: ce3552aa350641f0
+          volumeMounts:
+            - name: miraigo-bot-data
+              mountPath: /data
+      volumes:
+      - name: miraigo-bot-data
+        hostPath:
+          path: /docker_data/miraigo
