@@ -18,7 +18,7 @@ MiraiGo-Bot插件库
 [苏联笑话](./pkg/plugins/sovietjokes)|`.sj`随机一条人类政治精华
 [猫猫图](./pkg/plugins/thecat)|`.thecat`/`.cat` 随机发送一条猫猫图
 [狗狗图](./pkg/plugins/thedog)|`.thedog`/`.dog` 随机发送一条狗狗图
-~~[舔狗语录](./pkg/plugins/tiangou)~~|`tg` 随机发送一条舔狗语录(重复率较高),已停用
+~~[舔狗语录](./pkg/plugins/tiangou)~~|`.tg` 随机发送一条舔狗语录(重复率较高),已停用
 [提醒](./pkg/plugins/tips)|`.tips 10:10 提示内容` 10:10时,@该发送群友+提示内容
 [天气](./pkg/plugins/weather)|`.weather 省份 城市 地区(可以不传)` 调用腾讯天气
 ~~[微博监听](./pkg/plugins/weibolisten)~~|由于访问限制,暂时不可用
