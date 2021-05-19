@@ -8,4 +8,6 @@ WORKDIR /build
 COPY ./ .
 RUN cd /build && go build -tags netgo -o miraigo cmd/main.go && cp /build/miraigo /usr/bin/miraigo && chmod +x /usr/bin/miraigo
 WORKDIR /data
+VOLUME /data
+HEALTHCHECK  --interval=5s --timeout=1s --start-period=5s --retries=3 CMD cat /data/health
 ENTRYPOINT ["/usr/bin/miraigo"]

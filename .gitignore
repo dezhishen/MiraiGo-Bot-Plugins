@@ -356,3 +356,4 @@ device.json
 application.yaml
 cmd/__debug_bin
 scripts/deploy_docker_test.sh
+health
