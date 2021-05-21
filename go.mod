@@ -11,6 +11,6 @@ require (
 	github.com/go-ego/gse v0.66.0
 	github.com/jonreiter/govader v0.0.0-20210224072402-ab79f4c25a36
 	golang.org/x/sys v0.0.0-20210317225723-c4fcb01b228e // indirect
-	golang.org/x/text v0.3.5 // indirect
+	golang.org/x/text v0.3.5
 	gonum.org/v1/gonum v0.9.0 // indirect
 )
