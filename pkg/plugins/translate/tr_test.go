@@ -1,89 +1,40 @@
 package translate
 
 import (
-	"crypto/sha256"
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"strconv"
-	"strings"
 	"testing"
-	"time"
-
-	"github.com/antchfx/htmlquery"
-	"github.com/go-basic/uuid"
 )
 
 func TestTr(t *testing.T) {
-	uri := "http://dict-co.iciba.com/search.php?word=" + "dog"
+	uri := "http://api.fanyi.baidu.com/api/trans/vip/translate?"
+
+	qbt, _ := gbkToUtf8([]byte("徐思佳是我儿"))
+	q := string(qbt)
+	q = "测试"
+	appid := "20210521000836370"
+	from := "auto"
+	to := "auto"
+	salt := strconv.Itoa(rand.Intn(100000))
+	data := appid + q + salt + "f6ctAeXzVZNaknrgqiKs"
+	w := md5.New()
+	w.Write([]byte(data))
+	sign := hex.EncodeToString(w.Sum(nil))
+
+	uri += fmt.Sprintf("q=%v", q)
+	uri += fmt.Sprintf("&from=%v", from)
+	uri += fmt.Sprintf("&to=%v", to)
+	uri += fmt.Sprintf("&appid=%v", appid)
+	uri += fmt.Sprintf("&salt=%v", salt)
+	uri += fmt.Sprintf("&sign=%v", sign)
+
+	fmt.Printf("%v\n", uri)
 	resp, err := http.DefaultClient.Get(uri)
-	if err != nil {
-		return
-	}
-	robots, err := ioutil.ReadAll(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		return
-	}
-	respBodyStr := string(robots)
-	root, _ := htmlquery.Parse(strings.NewReader(respBodyStr))
-	brs := htmlquery.Find(root, "/html/body/text()")
-	for _, row := range brs {
-		ele := htmlquery.InnerText(row)
-		ele = strings.TrimSpace(ele)
-		if ele != "" {
-			vals := strings.Split(ele, " ")
-			for _, val := range vals {
-				fmt.Printf("%v\n", val)
-			}
-
-		}
-
-	}
-}
-
-func testYouDao() {
-
-	//http://fanyi.youdao.com/openapi.do?keyfrom=<keyfrom>&key=<key>&type=data&doctype=<doctype>&version=1.1&q=要翻译的文本
-	uri := "https://openapi.youdao.com/api"
-
-	salt := uuid.New()
-	curtime := strconv.FormatInt(time.Now().UTC().Unix(), 10)
-	fmt.Printf("%v\n", curtime)
-	appkey := "0b5c8081839859d7"
-	appsecret := "51Wil4okuw5LIHohef2Zc3FPimaGgpDi"
-	q := "test"
-	q = truncate(q)
-	fmt.Printf("%v\n", q)
-	sign := appkey + q + salt + curtime + appsecret //APP_KEY + truncate(q) + salt + curtime + APP_SECRET
-	encSign := fmt.Sprintf("%x", sha256.Sum256([]byte(sign)))
-	fmt.Printf("%v\n", encSign)
-
-	var dic = map[string]string{
-		"q":        q, //待转文字
-		"from":     "en",
-		"to":       "zh-CHS",
-		"appKey":   appkey,
-		"salt":     salt,
-		"sign":     encSign, //hash
-		"signType": "v3",
-		"curtime":  curtime, //当前时间戳
-	}
-
-	loop := 0
-	data := ""
-	for k, v := range dic {
-		if loop > 0 {
-			data += "&"
-		}
-		data += fmt.Sprintf("%v=%v", k, v)
-		loop++
-	}
-	fmt.Printf("%v\n", data)
-
-	resData, _ := gbkToUtf8([]byte(data))
-	resp, err := http.DefaultClient.Post(uri, "application/x-www-form-urlencoded", strings.NewReader(string(resData)))
-
 	if err != nil {
 		return
 	}

@@ -1,18 +1,14 @@
-package translate
+package dictionary
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/antchfx/htmlquery"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/plugins"
-	"golang.org/x/text/encoding/simplifiedchinese"
-	"golang.org/x/text/transform"
 )
 
 type Plugin struct {
@@ -23,8 +19,8 @@ type Plugin struct {
 
 func (w Plugin) PluginInfo() *plugins.PluginInfo {
 	return &plugins.PluginInfo{
-		ID:   "translate",
-		Name: "翻译插件",
+		ID:   "dictionary",
+		Name: "字典插件",
 	}
 }
 
@@ -81,25 +77,4 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 
 func init() {
 	plugins.RegisterOnMessagePlugin(Plugin{})
-}
-
-func truncate(q string) string {
-	if q == "" {
-		return ""
-	}
-	len := strings.Count(q, "") - 1
-	if len <= 20 {
-		return q
-	} else {
-		return q[0:10] + strconv.Itoa(len) + q[len-10:len]
-	}
-}
-
-func gbkToUtf8(s []byte) ([]byte, error) {
-	reader := transform.NewReader(bytes.NewReader(s), simplifiedchinese.GBK.NewDecoder())
-	d, e := ioutil.ReadAll(reader)
-	if e != nil {
-		return nil, e
-	}
-	return d, nil
 }
