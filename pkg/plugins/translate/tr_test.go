@@ -10,10 +10,39 @@ import (
 	"testing"
 	"time"
 
+	"github.com/antchfx/htmlquery"
 	"github.com/go-basic/uuid"
 )
 
 func TestTr(t *testing.T) {
+	uri := "http://dict-co.iciba.com/search.php?word=" + "dog"
+	resp, err := http.DefaultClient.Get(uri)
+	if err != nil {
+		return
+	}
+	robots, err := ioutil.ReadAll(resp.Body)
+	resp.Body.Close()
+	if err != nil {
+		return
+	}
+	respBodyStr := string(robots)
+	root, _ := htmlquery.Parse(strings.NewReader(respBodyStr))
+	brs := htmlquery.Find(root, "/html/body/text()")
+	for _, row := range brs {
+		ele := htmlquery.InnerText(row)
+		ele = strings.TrimSpace(ele)
+		if ele != "" {
+			vals := strings.Split(ele, " ")
+			for _, val := range vals {
+				fmt.Printf("%v\n", val)
+			}
+
+		}
+
+	}
+}
+
+func testYouDao() {
 
 	//http://fanyi.youdao.com/openapi.do?keyfrom=<keyfrom>&key=<key>&type=data&doctype=<doctype>&version=1.1&q=要翻译的文本
 	uri := "https://openapi.youdao.com/api"

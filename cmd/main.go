@@ -25,6 +25,7 @@ import (
 
 	// _ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/weibolisten"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/sovietjokes"
+	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/translate"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/server"
 )
 
