@@ -211,7 +211,7 @@ type TransStruct struct {
 }
 
 func getKey() (string, error) {
-	str := os.Getenv("BAIDU_FANYI_KEY")
+	str := os.Getenv("BOT_BAIDU_FANYI_KEY")
 	if str == "" {
 		return "", errors.New("未配置百度翻译的key")
 	}
