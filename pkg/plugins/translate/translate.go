@@ -5,10 +5,12 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -39,6 +41,8 @@ func (w Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 	}
 	return false
 }
+
+var key string
 
 func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageResponse, error) {
 
@@ -84,7 +88,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	uri := "http://api.fanyi.baidu.com/api/trans/vip/translate?"
 
 	appid := "20210521000836370"
-	data := appid + q + salt + "???????????????????"
+	data := appid + q + salt + key
 
 	signMd5 := md5.New()
 	signMd5.Write([]byte(data))
@@ -131,6 +135,11 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 
 func init() {
 	plugins.RegisterOnMessagePlugin(Plugin{})
+	var e error
+	key, e = getKey()
+	if e != nil {
+		fmt.Printf("读取百度翻译的key发生错误:[%v]", e.Error())
+	}
 }
 
 func gbkToUtf8(s []byte) ([]byte, error) {
@@ -199,4 +208,12 @@ type TransStruct struct {
 	FromLan string        `json:"from"`
 	ToLan   string        `json:"to"`
 	TransRe []TransResult `json:"trans_result"`
+}
+
+func getKey() (string, error) {
+	str := os.Getenv("BAIDU_FANYI_KEY")
+	if str == "" {
+		return "", errors.New("未配置百度翻译的key")
+	}
+	return str, nil
 }
