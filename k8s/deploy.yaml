@@ -26,7 +26,7 @@ spec:
     spec:        # 模板的规范
       containers:
         - name: miraigo
-          image: dezhishen/miraigo-bot:0.1
+          image: dezhishen/miraigo-bot:0.2
           imagePullPolicy: IfNotPresent
           env:                    ##通过环境变量的方式，直接传递pod=自定义Linux OS环境变量
             - name: BOT_BAIDU_FANYI_KEY
