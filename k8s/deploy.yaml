@@ -29,6 +29,16 @@ spec:
           image: dezhishen/miraigo-bot:0.1
           imagePullPolicy: IfNotPresent
           env:                    ##通过环境变量的方式，直接传递pod=自定义Linux OS环境变量
+            - name: BOT_BAIDU_FANYI_KEY
+              valueFrom:
+              configMapKeyRef:
+                name: bot-config
+                key: BOT_BAIDU_FANYI_KEY
+            - name: BOT_BAIDU_FANYI_ID
+              valueFrom:
+              configMapKeyRef:
+                name: bot-config
+                key: BOT_BAIDU_FANYI_ID
             - name: TZ     #本地Key
               value: Asia/Shanghai
             - name: LANG     #本地Key

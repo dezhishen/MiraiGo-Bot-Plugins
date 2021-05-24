@@ -42,8 +42,6 @@ func (w Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 	return false
 }
 
-var key string
-
 func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageResponse, error) {
 
 	var elements []message.IMessageElement
@@ -87,7 +85,6 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 
 	uri := "http://api.fanyi.baidu.com/api/trans/vip/translate?"
 
-	appid := "20210521000836370"
 	data := appid + q + salt + key
 
 	signMd5 := md5.New()
@@ -133,12 +130,19 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	return result, nil
 }
 
+var key string
+var appid string
+
 func init() {
 	plugins.RegisterOnMessagePlugin(Plugin{})
 	var e error
 	key, e = getKey()
 	if e != nil {
 		fmt.Printf("读取百度翻译的key发生错误:[%v]", e.Error())
+	}
+	appid, e = getID()
+	if e != nil {
+		fmt.Printf("读取百度翻译的ID发生错误:[%v]", e.Error())
 	}
 }
 
@@ -208,6 +212,14 @@ type TransStruct struct {
 	FromLan string        `json:"from"`
 	ToLan   string        `json:"to"`
 	TransRe []TransResult `json:"trans_result"`
+}
+
+func getID() (string, error) {
+	str := os.Getenv("BOT_BAIDU_FANYI_ID")
+	if str == "" {
+		return "", errors.New("未配置百度翻译的appID")
+	}
+	return str, nil
 }
 
 func getKey() (string, error) {
