@@ -34,7 +34,7 @@ spec:
                 configMapKeyRef:
                   name: bot-config
                   key: BOT_BAIDU_FANYI_KEY
-              - name: BOT_BAIDU_FANYI_ID
+            - name: BOT_BAIDU_FANYI_ID
               valueFrom:
                 configMapKeyRef:
                   name: bot-config
