@@ -84,7 +84,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	uri := "http://api.fanyi.baidu.com/api/trans/vip/translate?"
 
 	appid := "20210521000836370"
-	data := appid + q + salt + "f6ctAeXzVZNaknrgqiKs"
+	data := appid + q + salt + "???????????????????"
 
 	signMd5 := md5.New()
 	signMd5.Write([]byte(data))
