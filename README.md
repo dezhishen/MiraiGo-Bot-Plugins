@@ -22,6 +22,7 @@ MiraiGo-Bot插件库
 [提醒](./pkg/plugins/tips)|`.tips 10:10 提示内容` 10:10时,@该发送群友+提示内容
 [天气](./pkg/plugins/weather)|`.weather 省份 城市 地区(可以不传)` 调用腾讯天气
 ~~[微博监听](./pkg/plugins/weibolisten)~~|由于访问限制,暂时不可用
+[B站粉丝数查询](./pkg/plugins/bilifan)|`.bilifan UID` 发送该UID的粉丝数量
 
 ## 启动方式
 ### 宿主机方式

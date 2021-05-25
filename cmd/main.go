@@ -27,6 +27,8 @@ import (
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/dictionary"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/sovietjokes"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/translate"
+	
+	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/bilifans"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/server"
 )
 
