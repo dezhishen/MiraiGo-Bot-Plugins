@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -91,7 +92,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	signMd5.Write([]byte(data))
 	sign := hex.EncodeToString(signMd5.Sum(nil))
 
-	uri += fmt.Sprintf("q=%v", q)
+	uri += fmt.Sprintf("q=%v", url.QueryEscape(q))
 	uri += fmt.Sprintf("&from=%v", from)
 	uri += fmt.Sprintf("&to=%v", to)
 	uri += fmt.Sprintf("&appid=%v", appid)
