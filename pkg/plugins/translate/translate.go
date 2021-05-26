@@ -50,6 +50,8 @@ type TranslateReq struct {
 	Help bool   `short:"h" long:"help" description:"是否需要帮助"`
 }
 
+var dictI18 = getLanDic()
+
 func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageResponse, error) {
 
 	var elements []message.IMessageElement
@@ -62,15 +64,22 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	if err != nil {
 		return nil, err
 	}
-	dic := getLanDic()
-	q := commands[1]
+	// 测试 根命令 .dict|.tr
+	// rootCommand := commands[0]
+	// 文本
+	var q string
+	for i := 0; i < len(commands); i++ {
+		q = q + " " + commands[i]
+	}
+	q = strings.TrimSpace(q)
 	from := trReq.From
 	to := trReq.To
 	salt := strconv.Itoa(rand.Intn(100000))
 	if trReq.Help {
-		elements = append(elements, message.NewText(fmt.Sprintf("指令形式 .tr -f|--from 来源语言 -t|--to 目标语言 文本。 如.tr -f zh 爸爸。\n可以不指定目标语言，如.tr 爸爸。\n")))
+		elements = append(elements, message.NewText(fmt.Sprintf("指令形式 .tr -f|--from 来源语言 -t|--to 目标语言 文本。 "+
+			"如.tr -f zh 爸爸。\n可以不指定目标语言，如.tr 爸爸。\n")))
 		helpLan := "支持语言代码:\n"
-		for k, v := range dic {
+		for k, v := range dictI18 {
 			helpLan += fmt.Sprintf("%v : %v\n", k, v)
 		}
 		elements = append(elements, message.NewText(helpLan))
@@ -111,7 +120,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	}
 
 	re := transInfo.TransRe
-	elements = append(elements, message.NewText(fmt.Sprintf("%v=>%v\n", dic[transInfo.FromLan], dic[transInfo.ToLan])))
+	elements = append(elements, message.NewText(fmt.Sprintf("%v=>%v\n", dictI18[transInfo.FromLan], dictI18[transInfo.ToLan])))
 	elements = append(elements, message.NewText(fmt.Sprintf("源文本\n%v\n", re[0].Source)))
 	elements = append(elements, message.NewText(fmt.Sprintf("翻译文本\n%v\n", re[0].Destination)))
 
