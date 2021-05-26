@@ -23,6 +23,7 @@ MiraiGo-Bot插件库
 [天气](./pkg/plugins/weather)|`.weather 省份 城市 地区(可以不传)` 调用腾讯天气
 ~~[微博监听](./pkg/plugins/weibolisten)~~|由于访问限制,暂时不可用
 [B站粉丝数查询](./pkg/plugins/bilifan)|`.bilifan UID` 发送该UID的粉丝数量
+[翻译插件](./pkg/plugins/translate)|`.tr test` 翻译文本<br> `.tr -f zh 三点多,先喝茶 -t yue`
 
 ## 启动方式
 ### 宿主机方式
