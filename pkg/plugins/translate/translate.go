@@ -44,7 +44,6 @@ func (w Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 type TranslateReq struct {
 	From string `short:"f" long:"from" description:"来源语言" default:"auto"`
 	To   string `short:"t" long:"to" description:"目标语言" default:"auto"`
-	Help bool   `short:"h" long:"help" description:"是否需要帮助"`
 }
 
 var dictI18 = map[string]string{
@@ -86,7 +85,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	field, _ := v.(*message.TextElement)
 	context := field.Content
 	trReq := TranslateReq{}
-	commands, err := command.Parse(&trReq, strings.Split(context, " "))
+	commands, err := command.Parse("tr", &trReq, strings.Split(context, " "))
 	if err != nil {
 		return nil, err
 	}
@@ -100,20 +99,6 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	q = strings.TrimSpace(q)
 	from := trReq.From
 	to := trReq.To
-	if trReq.Help {
-		elements = append(elements, message.NewText(fmt.Sprintf("指令形式 .tr -f|--from 来源语言 -t|--to 目标语言 文本。 "+
-			"如.tr -f zh 爸爸。\n可以不指定目标语言，如.tr 爸爸。\n")))
-		helpLan := "支持语言代码:\n"
-		for k, v := range dictI18 {
-			helpLan += fmt.Sprintf("%v : %v\n", k, v)
-		}
-		elements = append(elements, message.NewText(helpLan))
-
-		result := &plugins.MessageResponse{
-			Elements: elements,
-		}
-		return result, nil
-	}
 	transInfo, err := callHttp(q, from, to)
 	if err != nil {
 		return nil, err
