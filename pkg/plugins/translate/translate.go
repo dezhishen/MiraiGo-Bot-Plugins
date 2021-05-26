@@ -94,7 +94,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	// rootCommand := commands[0]
 	// 文本
 	var q string
-	for i := 0; i < len(commands); i++ {
+	for i := 1; i < len(commands); i++ {
 		q = q + " " + commands[i]
 	}
 	q = strings.TrimSpace(q)
