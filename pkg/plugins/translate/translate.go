@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/Mrs4s/MiraiGo/message"
+	"github.com/dezhiShen/MiraiGo-Bot/pkg/command"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/plugins"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
@@ -43,6 +44,12 @@ func (w Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 	return false
 }
 
+type TranslateReq struct {
+	From string `short:"f" long:"from" description:"来源语言" default:"auto"`
+	To   string `short:"t" long:"to" description:"目标语言" default:"auto"`
+	Help bool   `short:"h" long:"help" description:"是否需要帮助"`
+}
+
 func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageResponse, error) {
 
 	var elements []message.IMessageElement
@@ -50,15 +57,18 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	v := request.Elements[0]
 	field, _ := v.(*message.TextElement)
 	context := field.Content
+	trReq := TranslateReq{}
+	commands, err := command.Parse(&trReq, strings.Split(context, " "))
+	if err != nil {
+		return nil, err
+	}
 	dic := getLanDic()
-	var q = ""
-	from := "auto"
-	to := "auto"
+	q := commands[1]
+	from := trReq.From
+	to := trReq.To
 	salt := strconv.Itoa(rand.Intn(100000))
-
-	if context == ".tr--help" {
-
-		elements = append(elements, message.NewText(fmt.Sprintf("指令形式 .tr [目标语言代码] [文本]。 如.tr [en] [baba]。\n可以不指定目标语言，如.tr [baba]。\n")))
+	if trReq.Help {
+		elements = append(elements, message.NewText(fmt.Sprintf("指令形式 .tr -f|--from 来源语言 -t|--to 目标语言 文本。 如.tr -f zh 爸爸。\n可以不指定目标语言，如.tr 爸爸。\n")))
 		helpLan := "支持语言代码:\n"
 		for k, v := range dic {
 			helpLan += fmt.Sprintf("%v : %v\n", k, v)
@@ -70,35 +80,18 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		}
 		return result, nil
 	}
-	test := context
-	lanset, lanStr := languageSet(test, dic)
-	fmt.Printf("%v\n", lanset)
-	if lanset {
-		to = lanStr
-		lanText := context
-		fmt.Printf("%v\n", lanText)
-		q = lanText[strings.Index(lanText, "]")+3 : strings.LastIndex(lanText, "]")]
-	} else {
-		pureText := context
-		fmt.Printf("%v\n", pureText)
-		q = pureText[strings.Index(pureText, "[")+1 : strings.LastIndex(pureText, "]")]
-	}
 
 	uri := "http://api.fanyi.baidu.com/api/trans/vip/translate?"
-
 	data := appid + q + salt + key
-
 	signMd5 := md5.New()
 	signMd5.Write([]byte(data))
 	sign := hex.EncodeToString(signMd5.Sum(nil))
-
 	uri += fmt.Sprintf("q=%v", url.QueryEscape(q))
 	uri += fmt.Sprintf("&from=%v", from)
 	uri += fmt.Sprintf("&to=%v", to)
 	uri += fmt.Sprintf("&appid=%v", appid)
 	uri += fmt.Sprintf("&salt=%v", salt)
 	uri += fmt.Sprintf("&sign=%v", sign)
-
 	fmt.Printf("%v\n", uri)
 	resp, err := http.DefaultClient.Get(uri)
 	if err != nil {
@@ -111,9 +104,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	}
 	respBodyStr := string(robots)
 	fmt.Printf("%v\n", respBodyStr)
-
 	var transInfo TransStruct
-
 	err = json.Unmarshal(robots, &transInfo)
 	if err != nil {
 		return nil, err
@@ -154,18 +145,6 @@ func gbkToUtf8(s []byte) ([]byte, error) {
 		return nil, e
 	}
 	return d, nil
-}
-
-func languageSet(lanstr string, dic map[string]string) (bool, string) {
-	lanstr = lanstr[strings.Index(lanstr, "[")+1 : strings.Index(lanstr, "]")]
-	if lanstr == "" {
-		return false, ""
-	}
-	fmt.Println(dic[lanstr])
-	if _, ok := dic[lanstr]; ok {
-		return true, lanstr
-	}
-	return false, ""
 }
 
 func getLanDic() map[string]string {
@@ -213,6 +192,10 @@ type TransStruct struct {
 	FromLan string        `json:"from"`
 	ToLan   string        `json:"to"`
 	TransRe []TransResult `json:"trans_result"`
+}
+
+func getRansResult() {
+
 }
 
 func getID() (string, error) {
