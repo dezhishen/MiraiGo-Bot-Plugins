@@ -27,14 +27,15 @@ MiraiGo-Bot插件库
 ## 启动方式
 ### 宿主机方式
 1.在[releases](https://github.com/dezhiShen/MiraiGo-Bot-Plugins/releases)中下载对应的包
+
 2.执行
 ### docker
-1.选择对应的镜像
-2.第一次执行时,需要生成设备信息,验证设备合法性等
-  2.1.`docker run -it -v ${数据目录}:/data dezhishen/miraigo-bot:${version}`
-  2.2.按照提示,输入账户/密码,验证设备等
-  2.3.关闭
-3.`docker run -d --restart=always -v ${数据目录}:/data dezhishen/miraigo-bot:${version}`
+- 1.选择对应的镜像
+- 2.第一次执行时,需要生成设备信息,验证设备合法性等
+  - 2.1.`docker run -it -v ${数据目录}:/data dezhishen/miraigo-bot:${version}`
+  - 2.2.按照提示,输入账户/密码,验证设备等
+  - 2.3.关闭
+- 3.`docker run -d --restart=always -v ${数据目录}:/data dezhishen/miraigo-bot:${version}`
 
 ### 二次开发
 参考本项目启动方式 [cmd/main](./cmd/main.go)
