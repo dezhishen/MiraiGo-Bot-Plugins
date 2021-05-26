@@ -194,10 +194,6 @@ type TransStruct struct {
 	TransRe []TransResult `json:"trans_result"`
 }
 
-func getRansResult() {
-
-}
-
 func getID() (string, error) {
 	str := os.Getenv("BOT_BAIDU_FANYI_ID")
 	if str == "" {
