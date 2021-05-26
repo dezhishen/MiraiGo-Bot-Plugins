@@ -85,7 +85,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	field, _ := v.(*message.TextElement)
 	context := field.Content
 	trReq := TranslateReq{}
-	commands, err := command.Parse("tr", &trReq, strings.Split(context, " "))
+	commands, err := command.Parse(".tr", &trReq, strings.Split(context, " "))
 	if err != nil {
 		return nil, err
 	}
