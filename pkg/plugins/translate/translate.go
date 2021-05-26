@@ -1,7 +1,6 @@
 package translate
 
 import (
-	"bytes"
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
@@ -18,8 +17,6 @@ import (
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/command"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/plugins"
-	"golang.org/x/text/encoding/simplifiedchinese"
-	"golang.org/x/text/transform"
 )
 
 type Plugin struct {
@@ -50,7 +47,36 @@ type TranslateReq struct {
 	Help bool   `short:"h" long:"help" description:"是否需要帮助"`
 }
 
-var dictI18 = getLanDic()
+var dictI18 = map[string]string{
+	"zh":  "中文",
+	"en":  "英语",
+	"yue": "粤语",
+	"wyw": "文言文",
+	"jp":  "日语",
+	"kor": "韩语",
+	"fra": "法语",
+	"spa": "西班牙语",
+	"th":  "泰语",
+	"ara": "阿拉伯语",
+	"ru":  "俄语",
+	"pt":  "葡萄牙语",
+	"de":  "德语",
+	"it":  "意大利语",
+	"el":  "希腊语",
+	"nl":  "荷兰语",
+	"pl":  "波兰语",
+	"bul": "保加利亚语",
+	"est": "爱沙尼亚语",
+	"dan": "丹麦语",
+	"fin": "芬兰语",
+	"cs":  "捷克语",
+	"rom": "罗马尼亚语",
+	"slo": "斯洛文尼亚语",
+	"swe": "瑞典语",
+	"hu":  "匈牙利语",
+	"cht": "繁体中文",
+	"vie": "越南语",
+}
 
 func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageResponse, error) {
 
@@ -74,7 +100,6 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	q = strings.TrimSpace(q)
 	from := trReq.From
 	to := trReq.To
-	salt := strconv.Itoa(rand.Intn(100000))
 	if trReq.Help {
 		elements = append(elements, message.NewText(fmt.Sprintf("指令形式 .tr -f|--from 来源语言 -t|--to 目标语言 文本。 "+
 			"如.tr -f zh 爸爸。\n可以不指定目标语言，如.tr 爸爸。\n")))
@@ -89,7 +114,24 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		}
 		return result, nil
 	}
+	transInfo, err := callHttp(q, from, to)
+	if err != nil {
+		return nil, err
+	}
+	re := transInfo.TransRe
+	elements = append(elements, message.NewText(fmt.Sprintf("%v=>%v\n", dictI18[transInfo.FromLan], dictI18[transInfo.ToLan])))
+	elements = append(elements, message.NewText(fmt.Sprintf("源文本\n%v\n", re[0].Source)))
+	elements = append(elements, message.NewText(fmt.Sprintf("翻译文本\n%v\n", re[0].Destination)))
 
+	result := &plugins.MessageResponse{
+		Elements: elements,
+	}
+
+	return result, nil
+}
+
+func callHttp(q, from, to string) (*TransStruct, error) {
+	salt := strconv.Itoa(rand.Intn(100000))
 	uri := "http://api.fanyi.baidu.com/api/trans/vip/translate?"
 	data := appid + q + salt + key
 	signMd5 := md5.New()
@@ -118,20 +160,11 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	if err != nil {
 		return nil, err
 	}
-
-	re := transInfo.TransRe
-	elements = append(elements, message.NewText(fmt.Sprintf("%v=>%v\n", dictI18[transInfo.FromLan], dictI18[transInfo.ToLan])))
-	elements = append(elements, message.NewText(fmt.Sprintf("源文本\n%v\n", re[0].Source)))
-	elements = append(elements, message.NewText(fmt.Sprintf("翻译文本\n%v\n", re[0].Destination)))
-
-	result := &plugins.MessageResponse{
-		Elements: elements,
-	}
-
-	return result, nil
+	return &transInfo, nil
 }
 
 var key string
+
 var appid string
 
 func init() {
@@ -145,51 +178,6 @@ func init() {
 	if e != nil {
 		fmt.Printf("读取百度翻译的ID发生错误:[%v]", e.Error())
 	}
-}
-
-func gbkToUtf8(s []byte) ([]byte, error) {
-	reader := transform.NewReader(bytes.NewReader(s), simplifiedchinese.GBK.NewDecoder())
-	d, e := ioutil.ReadAll(reader)
-	if e != nil {
-		return nil, e
-	}
-	return d, nil
-}
-
-func getLanDic() map[string]string {
-
-	dicLan := map[string]string{
-		"zh":  "中文",
-		"en":  "英语",
-		"yue": "粤语",
-		"wyw": "文言文",
-		"jp":  "日语",
-		"kor": "韩语",
-		"fra": "法语",
-		"spa": "西班牙语",
-		"th":  "泰语",
-		"ara": "阿拉伯语",
-		"ru":  "俄语",
-		"pt":  "葡萄牙语",
-		"de":  "德语",
-		"it":  "意大利语",
-		"el":  "希腊语",
-		"nl":  "荷兰语",
-		"pl":  "波兰语",
-		"bul": "保加利亚语",
-		"est": "爱沙尼亚语",
-		"dan": "丹麦语",
-		"fin": "芬兰语",
-		"cs":  "捷克语",
-		"rom": "罗马尼亚语",
-		"slo": "斯洛文尼亚语",
-		"swe": "瑞典语",
-		"hu":  "匈牙利语",
-		"cht": "繁体中文",
-		"vie": "越南语",
-	}
-	return dicLan
-
 }
 
 type TransResult struct {
