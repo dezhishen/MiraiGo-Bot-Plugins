@@ -142,7 +142,10 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		// if err != nil {
 		// 	return nil, err
 		// }
-		saveImage(field.Url, fileName)
+		_, err := saveImage(field.Url, fileName)
+		if err != nil {
+			return nil, err
+		}
 		result.Elements = append(result.Elements, message.NewText(fmt.Sprintf("保存成功,发送[%v]试试吧", fileName)))
 	}
 	return result, nil
