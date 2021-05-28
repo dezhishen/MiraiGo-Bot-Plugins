@@ -79,7 +79,7 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 				return nil, err
 			}
 			cache.Set(key, req.Name, 1*time.Minute)
-			result.Elements = append(result.Elements, message.NewText(fmt.Sprintf("表情包名称为:%v,请于一分钟之类发送一张图片", req.Name)))
+			result.Elements = append(result.Elements, message.NewText(fmt.Sprintf("表情包名称为:%v,请于一分钟之内发送一张图片", req.Name)))
 		} else {
 			faceKey := strings.TrimSpace(context)
 			image, err := getImage(faceKey)
