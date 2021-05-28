@@ -1,27 +1,17 @@
 package facesave
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
-	"image"
-	"image/jpeg"
-	"io"
-	"io/ioutil"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
-
-	"github.com/BurntSushi/graphics-go/graphics"
 
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/cache"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/command"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/plugins"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/storage"
-	"github.com/go-basic/uuid"
-	imgtype "github.com/shamsher31/goimgtype"
 )
 
 // Plugin Random插件
@@ -86,21 +76,39 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 			result.Elements = append(result.Elements, message.NewText(fmt.Sprintf("表情名称为:%v,请于一分钟之内发送一张图片", req.Name)))
 		} else {
 			faceKey := strings.TrimSpace(context)
-			image, err := getImage(faceKey)
-			if err != nil || image == nil {
+			md5, err := getImage(faceKey)
+			if err != nil || md5 == nil {
 				return nil, nil
 			}
 			if plugins.GroupMessage == request.MessageType {
-				imageElement, err := request.QQClient.UploadGroupImage(request.GroupCode, bytes.NewReader(*image))
-				if err != nil {
-					return nil, err
-				}
+				// imageElement, err := request.QQClient.UploadGroupImage(request.GroupCode, bytes.NewReader(*image))
+				// if err != nil {
+				// 	return nil, err
+				// }
+				imageElement := message.NewGroupImage(
+					"",
+					*md5,
+					0,
+					0,
+					0,
+					0,
+					0,
+				)
 				result.Elements = append(result.Elements, imageElement)
 			} else {
-				imageElement, err := request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(*image))
-				if err != nil {
-					return nil, err
-				}
+				// imageElement, err := request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(*image))
+				// if err != nil {
+				// 	return nil, err
+				// }
+				imageElement := message.NewGroupImage(
+					"",
+					*md5,
+					0,
+					0,
+					0,
+					0,
+					0,
+				)
 				result.Elements = append(result.Elements, imageElement)
 			}
 		}
@@ -116,7 +124,16 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		cache.Delete(key)
 		v := request.Elements[0]
 		field, _ := v.(*message.ImageElement)
-		println("url:  " + field.Url)
+		// println(fmt.Sprintf("\nFilename	%v\nSize	%v\nWidth    %v\nHeight   %v\nUrl      %v\nMd5      %v\nData     %v\n",
+		// 	field.Filename,
+		// 	field.Size,
+		// 	field.Width,
+		// 	field.Height,
+		// 	field.Url,
+		// 	field.Md5,
+		// 	field.Data,
+		// ))
+		// println("url:  " + field.Url)
 		// reqest, _ := http.NewRequest("GET", field.Url, nil)
 		// // Accept: image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8
 		// // Accept-Encoding: gzip, deflate, br
@@ -148,7 +165,7 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		// if err != nil {
 		// 	return nil, err
 		// }
-		_, err := saveImage(field.Url, fileName)
+		_, err := saveImage(field.Md5, fileName)
 		if err != nil {
 			return nil, err
 		}
@@ -175,28 +192,26 @@ func init() {
 	}
 }
 
-func saveImage(url, fileName string) (string, error) {
-	id, _ := uuid.GenerateUUID()
-	path := fmt.Sprintf("./face/%v.jpg", id)
-	// run shell `wget URL -O filepath`
-	cmd := exec.Command("wget", url, "-O", path)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		return "", err
-	}
-	storage.Put([]byte(pluginID), []byte(fileName), []byte(path))
-	return path, nil
+func saveImage(md5 []byte, fileName string) ([]byte, error) {
+	// id, _ := uuid.GenerateUUID()
+	// path := fmt.Sprintf("./face/%v.jpg", id)
+	// // run shell `wget URL -O filepath`
+	// cmd := exec.Command("wget", url, "-O", path)
+	// cmd.Stdout = os.Stdout
+	// cmd.Stderr = os.Stderr
+	// err := cmd.Run()
+	// if err != nil {
+	// 	return "", err
+	// }
+	storage.Put([]byte(pluginID), []byte(fileName), md5)
+	return md5, nil
 }
 
-var width = 120
-
 func getImage(fileName string) (*[]byte, error) {
-	var filePath string
+	var md5 []byte
 	err := storage.Get([]byte(pluginID), []byte(fileName), func(b []byte) error {
 		if b != nil {
-			filePath = string(b)
+			md5 = b
 			return nil
 		}
 		return errors.New("图片不存在")
@@ -204,62 +219,63 @@ func getImage(fileName string) (*[]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	ok, _ := pathExists(filePath)
-	if ok {
-		scaleFilePath := strings.ReplaceAll(filePath, ".jpg", fmt.Sprintf("_%v.jpg", width))
-		ok, _ := pathExists(scaleFilePath)
-		if !ok {
-			datatype, err := imgtype.Get(filePath)
-			if err != nil {
-				return nil, err
-			}
-			if datatype == `image/jpeg` || datatype == `image/png` {
-				file, err := os.Open(filePath)
-				if err != nil {
-					return nil, err
-				}
-				defer file.Close()
-				src, _, err := image.Decode(file)
-				if err != nil {
-					return nil, err
-				}
-				bound := src.Bounds()
-				dx := bound.Dx()
-				scaleFile, _ := os.Create(scaleFilePath)
-				defer scaleFile.Close()
-				if dx > width {
-					dy := bound.Dy()
-					dst := image.NewRGBA(image.Rect(0, 0, width, width*dy/dx))
-					err = graphics.Scale(dst, src)
-					if err != nil {
-						return nil, err
-					}
-					err = jpeg.Encode(scaleFile, dst, &jpeg.Options{Quality: 100})
-					if err != nil {
-						return nil, err
-					}
-				} else {
-					io.Copy(scaleFile, file)
-				}
-			} else {
-				file, err := os.Open(filePath)
-				if err != nil {
-					return nil, err
-				}
-				defer file.Close()
-				scaleFile, _ := os.Create(scaleFilePath)
-				defer scaleFile.Close()
-				io.Copy(scaleFile, file)
-			}
+	return &md5, nil
+	// ok, _ := pathExists(filePath)
+	// if ok {
+	// 	scaleFilePath := strings.ReplaceAll(filePath, ".jpg", fmt.Sprintf("_%v.jpg", width))
+	// 	ok, _ := pathExists(scaleFilePath)
+	// 	if !ok {
+	// 		datatype, err := imgtype.Get(filePath)
+	// 		if err != nil {
+	// 			return nil, err
+	// 		}
+	// 		if datatype == `image/jpeg` || datatype == `image/png` {
+	// 			file, err := os.Open(filePath)
+	// 			if err != nil {
+	// 				return nil, err
+	// 			}
+	// 			defer file.Close()
+	// 			src, _, err := image.Decode(file)
+	// 			if err != nil {
+	// 				return nil, err
+	// 			}
+	// 			bound := src.Bounds()
+	// 			dx := bound.Dx()
+	// 			scaleFile, _ := os.Create(scaleFilePath)
+	// 			defer scaleFile.Close()
+	// 			if dx > width {
+	// 				dy := bound.Dy()
+	// 				dst := image.NewRGBA(image.Rect(0, 0, width, width*dy/dx))
+	// 				err = graphics.Scale(dst, src)
+	// 				if err != nil {
+	// 					return nil, err
+	// 				}
+	// 				err = jpeg.Encode(scaleFile, dst, &jpeg.Options{Quality: 100})
+	// 				if err != nil {
+	// 					return nil, err
+	// 				}
+	// 			} else {
+	// 				io.Copy(scaleFile, file)
+	// 			}
+	// 		} else {
+	// 			file, err := os.Open(filePath)
+	// 			if err != nil {
+	// 				return nil, err
+	// 			}
+	// 			defer file.Close()
+	// 			scaleFile, _ := os.Create(scaleFilePath)
+	// 			defer scaleFile.Close()
+	// 			io.Copy(scaleFile, file)
+	// 		}
 
-		}
-		file, err := os.Open(scaleFilePath)
-		if err != nil {
-			return nil, err
-		}
-		defer file.Close()
-		content, err := ioutil.ReadAll(file)
-		return &content, err
-	}
-	return nil, errors.New("图片不存在")
+	// 	}
+	// 	file, err := os.Open(scaleFilePath)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	defer file.Close()
+	// 	content, err := ioutil.ReadAll(file)
+	// 	return &content, err
+	// }
+	// return nil, errors.New("图片不存在")
 }
