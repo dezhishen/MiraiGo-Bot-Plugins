@@ -102,9 +102,11 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		}
 	} else if len(request.Elements) == 1 && request.Elements[0].Type() == message.Image {
 		cacheValue, exists := cache.Get(key)
-		fileName := fmt.Sprintf("%v", cacheValue)
-		print(fileName)
-		if !exists || fileName == "" {
+		if !exists {
+			return nil, errors.New("已经超过一分钟啦,请重新开始保持吧")
+		}
+		fileName := cacheValue.(string)
+		if fileName == "" {
 			return nil, errors.New("已经超过一分钟啦,请重新开始保持吧")
 		}
 		cache.Delete(key)
