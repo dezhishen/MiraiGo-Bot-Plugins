@@ -105,6 +105,7 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		if !exists || fileName == "" {
 			return nil, errors.New("已经超过一分钟啦,请重新开始保持吧")
 		}
+		cache.Delete(key)
 		v := request.Elements[0]
 		field, _ := v.(*message.ImageElement)
 		r, err := http.DefaultClient.Get(field.Url)
@@ -116,8 +117,8 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		if err != nil {
 			return nil, err
 		}
-
 		saveImage(fmt.Sprintf("%v", fileName), robots)
+		result.Elements = append(result.Elements, message.NewText(fmt.Sprintf("保存成功,发送[%v]试试吧", fileName)))
 	}
 	return result, nil
 }
@@ -140,11 +141,11 @@ func init() {
 	}
 }
 
-func saveImage(key string, image []byte) string {
+func saveImage(fileName string, image []byte) string {
 	id, _ := uuid.GenerateUUID()
 	path := fmt.Sprintf("./face/%v.jpg", id)
 	ioutil.WriteFile(path, image, 0777)
-	storage.Put([]byte(pluginID), []byte(key), []byte(path))
+	storage.Put([]byte(pluginID), []byte(fileName), []byte(path))
 	return path
 }
 
