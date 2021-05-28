@@ -207,6 +207,7 @@ func getImage(fileName string) (*[]byte, error) {
 	if ok {
 		scaleFilePath := strings.ReplaceAll(filePath, ".jpg", fmt.Sprintf("_%v.jpg", width))
 		ok, _ := pathExists(scaleFilePath)
+		doCopy := false
 		if !ok {
 			file, err := os.Open(filePath)
 			if err != nil {
@@ -215,23 +216,44 @@ func getImage(fileName string) (*[]byte, error) {
 			defer file.Close()
 			src, _, err := image.Decode(file)
 			if err != nil {
+				doCopy = true
+			} else {
+				bound := src.Bounds()
+				dx := bound.Dx()
+				scaleFile, _ := os.Create(scaleFilePath)
+				defer scaleFile.Close()
+				if dx > width {
+					dy := bound.Dy()
+					dst := image.NewRGBA(image.Rect(0, 0, width, width*dy/dx))
+					err = graphics.Scale(dst, src)
+					if err != nil {
+						doCopy = true
+					} else {
+						err = jpeg.Encode(scaleFile, dst, &jpeg.Options{Quality: 100})
+						if err != nil {
+							doCopy = true
+						}
+					}
+				} else {
+					doCopy = true
+				}
+			}
+		}
+		if doCopy {
+			file, err := os.Open(filePath)
+			if err != nil {
 				return nil, err
 			}
-			bound := src.Bounds()
-			dx := bound.Dx()
-			scaleFile, _ := os.Create(scaleFilePath)
-			defer scaleFile.Close()
-			if dx > width {
-				dy := bound.Dy()
-				dst := image.NewRGBA(image.Rect(0, 0, width, width*dy/dx))
-				err = graphics.Scale(dst, src)
-				if err != nil {
-					return nil, err
-				}
-				jpeg.Encode(scaleFile, dst, &jpeg.Options{Quality: 100})
+			defer file.Close()
+			ok, _ = pathExists(scaleFilePath)
+			var scaleFile *os.File
+			if ok {
+				scaleFile, _ = os.Create(scaleFilePath)
 			} else {
-				io.Copy(scaleFile, file)
+				scaleFile, _ = os.Open(scaleFilePath)
 			}
+			defer scaleFile.Close()
+			io.Copy(scaleFile, file)
 		}
 		file, err := os.Open(scaleFilePath)
 		if err != nil {
