@@ -11,7 +11,7 @@ RUN cd /build && go build -tags netgo -ldflags="-w -s" -o miraigo cmd/main.go
 FROM alpine:latest
 WORKDIR /data
 
-COPY --from=builder /build/miraigo /data/miraigo  && chmod +x /usr/bin/miraigo
+COPY --from=builder /build/miraigo /usr/bin/miraigo  && chmod +x /usr/bin/miraigo
 
 VOLUME /data
 HEALTHCHECK  --interval=5s --timeout=1s --start-period=5s --retries=3 CMD cat /data/health
