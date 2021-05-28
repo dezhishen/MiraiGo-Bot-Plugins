@@ -101,7 +101,9 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 			}
 		}
 	} else if len(request.Elements) == 1 && request.Elements[0].Type() == message.Image {
-		fileName, exists := cache.Get(key)
+		cacheValue, exists := cache.Get(key)
+		fileName := fmt.Sprintf("%v", cacheValue)
+		print(fileName)
 		if !exists || fileName == "" {
 			return nil, errors.New("已经超过一分钟啦,请重新开始保持吧")
 		}
