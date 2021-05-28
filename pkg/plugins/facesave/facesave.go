@@ -112,8 +112,8 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		field, _ := v.(*message.ImageElement)
 		println("url:  " + field.Url)
 		reqest, _ := http.NewRequest("GET", field.Url, nil)
-		reqest.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) electron-qq/1.4.7 Chrome/89.0.4389.128 Electron/12.0.7 Safari/537.36")
-		reqest.Header.Add("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9")
+		reqest.Header.Add("User-Agent", "Wget/1.20.1 (linux-gnu)")
+		reqest.Header.Add("Accept", "*/*")
 		r, err := http.DefaultClient.Do(reqest)
 		if err != nil {
 			return nil, err
