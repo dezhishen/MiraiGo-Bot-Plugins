@@ -92,7 +92,6 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 				return nil, nil
 			}
 			if plugins.GroupMessage == request.MessageType {
-				// imageElement, err := request.QQClient.UploadGroupImage(request.GroupCode, bytes.NewReader(*image))
 				// if err != nil {
 				// 	return nil, err
 				// }
@@ -105,6 +104,7 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 					imageInfo.Height,
 					2000,
 				)
+				imageElement.Url = imageInfo.Url
 				result.Elements = append(result.Elements, imageElement)
 			} else {
 				// imageElement, err := request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(*image))
@@ -120,6 +120,7 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 					imageInfo.Height,
 					2000,
 				)
+				imageElement.Url = imageInfo.Url
 				result.Elements = append(result.Elements, imageElement)
 			}
 		}
