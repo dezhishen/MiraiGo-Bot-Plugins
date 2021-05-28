@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -113,16 +112,7 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		cache.Delete(key)
 		v := request.Elements[0]
 		field, _ := v.(*message.ImageElement)
-		r, err := http.DefaultClient.Get(field.Url)
-		if err != nil {
-			return nil, err
-		}
-		defer r.Body.Close()
-		robots, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			return nil, err
-		}
-		saveImage(fileName, robots)
+		saveImage(fileName, field.Data)
 		result.Elements = append(result.Elements, message.NewText(fmt.Sprintf("保存成功,发送[%v]试试吧", fileName)))
 	}
 	return result, nil
