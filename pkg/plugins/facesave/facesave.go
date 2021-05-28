@@ -112,8 +112,27 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		field, _ := v.(*message.ImageElement)
 		println("url:  " + field.Url)
 		reqest, _ := http.NewRequest("GET", field.Url, nil)
-		reqest.Header.Add("User-Agent", "Wget/1.20.1 (linux-gnu)")
-		reqest.Header.Add("Accept", "*/*")
+		// Accept: image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8
+		// Accept-Encoding: gzip, deflate, br
+		// Accept-Language: zh-CN
+		// Cache-Control: no-cache
+		// Connection: keep-alive
+		// Host: gchat.qpic.cn
+		// Pragma: no-cache
+		// Sec-Fetch-Dest: image
+		// Sec-Fetch-Mode: no-cors
+		// Sec-Fetch-Site: cross-site
+		// User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) electron-qq/1.4.7 Chrome/89.0.4389.128 Electron/12.0.7 Safari/537.36
+		reqest.Header.Add("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
+		reqest.Header.Add("Accept-Encoding", "gzip, deflate, br")
+		reqest.Header.Add("Cache-Control", "no-cache")
+		reqest.Header.Add("Connection", "keep-alive")
+		reqest.Header.Add("Host", "gchat.qpic.cn")
+		reqest.Header.Add("Pragma", "no-cache")
+		reqest.Header.Add("Sec-Fetch-Dest", "image")
+		reqest.Header.Add("Sec-Fetch-Mode", "no-cors")
+		reqest.Header.Add("Sec-Fetch-Site", "cross-site")
+		reqest.Host = "gchat.qpic.cn"
 		r, err := http.DefaultClient.Do(reqest)
 		if err != nil {
 			return nil, err
