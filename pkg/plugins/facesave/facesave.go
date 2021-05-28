@@ -4,11 +4,16 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"image"
+	"image/jpeg"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/BurntSushi/graphics-go/graphics"
 
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/cache"
@@ -184,6 +189,8 @@ func saveImage(url, fileName string) (string, error) {
 	return path, nil
 }
 
+var width = 120
+
 func getImage(fileName string) (*[]byte, error) {
 	var filePath string
 	err := storage.Get([]byte(pluginID), []byte(fileName), func(b []byte) error {
@@ -198,9 +205,37 @@ func getImage(fileName string) (*[]byte, error) {
 	}
 	ok, _ := pathExists(filePath)
 	if ok {
-		file, err := os.Open(filePath)
+		scaleFilePath := strings.ReplaceAll(filePath, ".jpg", fmt.Sprintf("_%v.jpg", width))
+		ok, _ := pathExists(scaleFilePath)
+		if !ok {
+			file, err := os.Open(filePath)
+			if err != nil {
+				return nil, err
+			}
+			defer file.Close()
+			src, _, err := image.Decode(file)
+			if err != nil {
+				return nil, err
+			}
+			bound := src.Bounds()
+			dx := bound.Dx()
+			scaleFile, _ := os.Create(scaleFilePath)
+			defer scaleFile.Close()
+			if dx > width {
+				dy := bound.Dy()
+				dst := image.NewRGBA(image.Rect(0, 0, width, width*dy/dx))
+				err = graphics.Scale(dst, src)
+				if err != nil {
+					return nil, err
+				}
+				jpeg.Encode(scaleFile, dst, &jpeg.Options{Quality: 100})
+			} else {
+				io.Copy(scaleFile, file)
+			}
+		}
+		file, err := os.Open(scaleFilePath)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		defer file.Close()
 		content, err := ioutil.ReadAll(file)
