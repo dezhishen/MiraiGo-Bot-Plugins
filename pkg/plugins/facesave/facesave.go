@@ -1,6 +1,7 @@
 package facesave
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -52,6 +53,16 @@ type FaceSaveReq struct {
 	Name string `short:"n" long:"name" description:"表情的名称" required:"true"`
 }
 
+type ImageInfo struct {
+	Filename string `json:"filename"`
+	Size     int32  `json:"size"`
+	Width    int32  `json:"width"`
+	Height   int32  `json:"height"`
+	Url      string `json:"url"`
+	Md5      []byte `json:"md5"`
+	Data     []byte `json:"data"`
+}
+
 // OnMessageEvent OnMessageEvent
 func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageResponse, error) {
 	result := &plugins.MessageResponse{}
@@ -76,7 +87,7 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 			result.Elements = append(result.Elements, message.NewText(fmt.Sprintf("表情名称为:%v,请于一分钟之内发送一张图片", req.Name)))
 		} else {
 			faceKey := strings.TrimSpace(context)
-			md5, err := getImage(faceKey)
+			imageInfo, err := getImage(faceKey)
 			if err != nil || md5 == nil {
 				return nil, nil
 			}
@@ -87,12 +98,12 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 				// }
 				imageElement := message.NewGroupImage(
 					"",
-					*md5,
+					imageInfo.Md5,
 					0,
-					0,
-					0,
-					0,
-					0,
+					imageInfo.Size,
+					imageInfo.Width,
+					imageInfo.Height,
+					2000,
 				)
 				result.Elements = append(result.Elements, imageElement)
 			} else {
@@ -102,12 +113,12 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 				// }
 				imageElement := message.NewGroupImage(
 					"",
-					*md5,
+					imageInfo.Md5,
 					0,
-					0,
-					0,
-					0,
-					0,
+					imageInfo.Size,
+					imageInfo.Width,
+					imageInfo.Height,
+					2000,
 				)
 				result.Elements = append(result.Elements, imageElement)
 			}
@@ -165,7 +176,7 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		// if err != nil {
 		// 	return nil, err
 		// }
-		_, err := saveImage(field.Md5, fileName)
+		_, err := saveImage(field, fileName)
 		if err != nil {
 			return nil, err
 		}
@@ -192,7 +203,7 @@ func init() {
 	}
 }
 
-func saveImage(md5 []byte, fileName string) ([]byte, error) {
+func saveImage(file *message.ImageElement, fileName string) ([]byte, error) {
 	// id, _ := uuid.GenerateUUID()
 	// path := fmt.Sprintf("./face/%v.jpg", id)
 	// // run shell `wget URL -O filepath`
@@ -203,23 +214,33 @@ func saveImage(md5 []byte, fileName string) ([]byte, error) {
 	// if err != nil {
 	// 	return "", err
 	// }
-	storage.Put([]byte(pluginID), []byte(fileName), md5)
-	return md5, nil
+	fileInfo := &ImageInfo{
+		Filename: file.Filename,
+		Size:     file.Size,   //int32  `json:"size"`
+		Width:    file.Width,  //int32  `json:"width"`
+		Height:   file.Height, //int32  `json:"height"`
+		Url:      file.Url,    //string `json:"url"`
+		Md5:      file.Md5,    //[]byte `json:"md5"`
+		Data:     file.Data,   //[]byte `json:"data"`
+	}
+	jsonBytes, _ := json.Marshal(fileInfo)
+	storage.Put([]byte(pluginID), []byte(fileName), jsonBytes)
+	return jsonBytes, nil
 }
 
-func getImage(fileName string) (*[]byte, error) {
-	var md5 []byte
+func getImage(fileName string) (*ImageInfo, error) {
+	var result ImageInfo
 	err := storage.Get([]byte(pluginID), []byte(fileName), func(b []byte) error {
 		if b != nil {
-			md5 = b
-			return nil
+			err := json.Unmarshal(b, &result)
+			return err
 		}
 		return errors.New("图片不存在")
 	})
 	if err != nil {
 		return nil, err
 	}
-	return &md5, nil
+	return &result, nil
 	// ok, _ := pathExists(filePath)
 	// if ok {
 	// 	scaleFilePath := strings.ReplaceAll(filePath, ".jpg", fmt.Sprintf("_%v.jpg", width))
