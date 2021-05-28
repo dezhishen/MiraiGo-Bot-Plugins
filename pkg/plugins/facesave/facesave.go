@@ -37,9 +37,7 @@ func (p Plugin) PluginInfo() *plugins.PluginInfo {
 // IsFireEvent 是否触发
 func (p Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 	if len(msg.Elements) == 1 && msg.Elements[0].Type() == message.Text {
-		v := msg.Elements[0]
-		field, ok := v.(*message.TextElement)
-		return ok && (strings.HasPrefix(field.Content, ".face-save") || strings.HasSuffix(field.Content, ".jpg"))
+		return true
 	} else if len(msg.Elements) == 1 && msg.Elements[0].Type() == message.Image {
 		var key string
 		if msg.MessageType == plugins.GroupMessage {
@@ -54,7 +52,7 @@ func (p Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 }
 
 type FaceSaveReq struct {
-	Name string `short:"n" long:"name" description:"表情包的名称,请携带后缀" required:"true"`
+	Name string `short:"n" long:"name" description:"表情的名称" required:"true"`
 }
 
 // OnMessageEvent OnMessageEvent
@@ -78,12 +76,11 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 				return nil, err
 			}
 			cache.Set(key, req.Name, 1*time.Minute)
-			result.Elements = append(result.Elements, message.NewText(fmt.Sprintf("表情包名称为:%v,请于一分钟之内发送一张图片", req.Name)))
+			result.Elements = append(result.Elements, message.NewText(fmt.Sprintf("表情名称为:%v,请于一分钟之内发送一张图片", req.Name)))
 		} else {
 			faceKey := strings.TrimSpace(context)
 			image, err := getImage(faceKey)
 			if err != nil || image == nil {
-				print(err)
 				return nil, nil
 			}
 			if plugins.GroupMessage == request.MessageType {
