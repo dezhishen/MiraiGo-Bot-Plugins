@@ -88,7 +88,7 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		} else {
 			faceKey := strings.TrimSpace(context)
 			imageInfo, err := getImage(faceKey)
-			if err != nil || md5 == nil {
+			if err != nil || imageInfo == nil {
 				return nil, nil
 			}
 			if plugins.GroupMessage == request.MessageType {
