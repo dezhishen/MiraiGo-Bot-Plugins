@@ -110,6 +110,7 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		cache.Delete(key)
 		v := request.Elements[0]
 		field, _ := v.(*message.ImageElement)
+		println("url:  " + field.Url)
 		reqest, _ := http.NewRequest("GET", field.Url, nil)
 		reqest.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) electron-qq/1.4.7 Chrome/89.0.4389.128 Electron/12.0.7 Safari/537.36")
 		r, err := http.DefaultClient.Do(reqest)
