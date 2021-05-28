@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -111,38 +111,38 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		v := request.Elements[0]
 		field, _ := v.(*message.ImageElement)
 		println("url:  " + field.Url)
-		reqest, _ := http.NewRequest("GET", field.Url, nil)
-		// Accept: image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8
-		// Accept-Encoding: gzip, deflate, br
-		// Accept-Language: zh-CN
-		// Cache-Control: no-cache
-		// Connection: keep-alive
-		// Host: gchat.qpic.cn
-		// Pragma: no-cache
-		// Sec-Fetch-Dest: image
-		// Sec-Fetch-Mode: no-cors
-		// Sec-Fetch-Site: cross-site
-		// User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) electron-qq/1.4.7 Chrome/89.0.4389.128 Electron/12.0.7 Safari/537.36
-		reqest.Header.Add("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
-		reqest.Header.Add("Accept-Encoding", "gzip, deflate, br")
-		reqest.Header.Add("Cache-Control", "no-cache")
-		reqest.Header.Add("Connection", "keep-alive")
-		reqest.Header.Add("Host", "gchat.qpic.cn")
-		reqest.Header.Add("Pragma", "no-cache")
-		reqest.Header.Add("Sec-Fetch-Dest", "image")
-		reqest.Header.Add("Sec-Fetch-Mode", "no-cors")
-		reqest.Header.Add("Sec-Fetch-Site", "cross-site")
-		reqest.Host = "gchat.qpic.cn"
-		r, err := http.DefaultClient.Do(reqest)
-		if err != nil {
-			return nil, err
-		}
-		defer r.Body.Close()
-		robots, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			return nil, err
-		}
-		saveImage(fileName, robots)
+		// reqest, _ := http.NewRequest("GET", field.Url, nil)
+		// // Accept: image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8
+		// // Accept-Encoding: gzip, deflate, br
+		// // Accept-Language: zh-CN
+		// // Cache-Control: no-cache
+		// // Connection: keep-alive
+		// // Host: gchat.qpic.cn
+		// // Pragma: no-cache
+		// // Sec-Fetch-Dest: image
+		// // Sec-Fetch-Mode: no-cors
+		// // Sec-Fetch-Site: cross-site
+		// // User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) electron-qq/1.4.7 Chrome/89.0.4389.128 Electron/12.0.7 Safari/537.36
+		// reqest.Header.Add("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
+		// reqest.Header.Add("Accept-Encoding", "gzip, deflate, br")
+		// reqest.Header.Add("Cache-Control", "no-cache")
+		// reqest.Header.Add("Connection", "keep-alive")
+		// reqest.Header.Add("Host", "gchat.qpic.cn")
+		// reqest.Header.Add("Pragma", "no-cache")
+		// reqest.Header.Add("Sec-Fetch-Dest", "image")
+		// reqest.Header.Add("Sec-Fetch-Mode", "no-cors")
+		// reqest.Header.Add("Sec-Fetch-Site", "cross-site")
+		// reqest.Host = "gchat.qpic.cn"
+		// r, err := http.DefaultClient.Do(reqest)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		// defer r.Body.Close()
+		// robots, err := ioutil.ReadAll(r.Body)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		saveImage(field.Url, fileName)
 		result.Elements = append(result.Elements, message.NewText(fmt.Sprintf("保存成功,发送[%v]试试吧", fileName)))
 	}
 	return result, nil
@@ -166,12 +166,19 @@ func init() {
 	}
 }
 
-func saveImage(fileName string, image []byte) string {
+func saveImage(url, fileName string) (string, error) {
 	id, _ := uuid.GenerateUUID()
 	path := fmt.Sprintf("./face/%v.jpg", id)
-	ioutil.WriteFile(path, image, 0777)
+	// run shell `wget URL -O filepath`
+	cmd := exec.Command("wget", url, "-O", path)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		return "", err
+	}
 	storage.Put([]byte(pluginID), []byte(fileName), []byte(path))
-	return path
+	return path, nil
 }
 
 func getImage(fileName string) (*[]byte, error) {
