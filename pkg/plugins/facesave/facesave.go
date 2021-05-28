@@ -54,7 +54,7 @@ func (p Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 }
 
 type FaceSaveReq struct {
-	Name string `short:"n" long:"name" description:"表情包的名称,请勿携带后缀" required:"true" default:"auto"`
+	Name string `short:"n" long:"name" description:"表情包的名称,请携带后缀" required:"true"`
 }
 
 // OnMessageEvent OnMessageEvent
