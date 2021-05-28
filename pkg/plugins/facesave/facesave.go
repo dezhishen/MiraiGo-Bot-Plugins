@@ -84,6 +84,7 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 			faceKey := strings.TrimSpace(context)
 			image, err := getImage(faceKey)
 			if err != nil || image == nil {
+				print(err)
 				return nil, nil
 			}
 			if plugins.GroupMessage == request.MessageType {
@@ -158,6 +159,7 @@ func getImage(fileName string) (*[]byte, error) {
 	err := storage.Get([]byte(pluginID), []byte(fileName), func(b []byte) error {
 		if b != nil {
 			filePath = string(b)
+			return nil
 		}
 		return errors.New("图片不存在")
 	})
