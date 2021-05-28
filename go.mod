@@ -11,5 +11,7 @@ require (
 	github.com/go-basic/uuid v1.0.0
 	github.com/go-ego/gse v0.66.0
 	github.com/jonreiter/govader v0.0.0-20210224072402-ab79f4c25a36
+	github.com/shamsher31/goimgext v1.0.0 // indirect
+	github.com/shamsher31/goimgtype v1.0.0
 	gonum.org/v1/gonum v0.9.0 // indirect
 )

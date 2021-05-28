@@ -21,6 +21,7 @@ import (
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/plugins"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/storage"
 	"github.com/go-basic/uuid"
+	imgtype "github.com/shamsher31/goimgtype"
 )
 
 // Plugin Random插件
@@ -207,17 +208,21 @@ func getImage(fileName string) (*[]byte, error) {
 	if ok {
 		scaleFilePath := strings.ReplaceAll(filePath, ".jpg", fmt.Sprintf("_%v.jpg", width))
 		ok, _ := pathExists(scaleFilePath)
-		doCopy := false
 		if !ok {
-			file, err := os.Open(filePath)
+			datatype, err := imgtype.Get(filePath)
 			if err != nil {
 				return nil, err
 			}
-			defer file.Close()
-			src, _, err := image.Decode(file)
-			if err != nil {
-				doCopy = true
-			} else {
+			if datatype == `image/jpeg` || datatype == `image/png` {
+				file, err := os.Open(filePath)
+				if err != nil {
+					return nil, err
+				}
+				defer file.Close()
+				src, _, err := image.Decode(file)
+				if err != nil {
+					return nil, err
+				}
 				bound := src.Bounds()
 				dx := bound.Dx()
 				scaleFile, _ := os.Create(scaleFilePath)
@@ -227,33 +232,26 @@ func getImage(fileName string) (*[]byte, error) {
 					dst := image.NewRGBA(image.Rect(0, 0, width, width*dy/dx))
 					err = graphics.Scale(dst, src)
 					if err != nil {
-						doCopy = true
-					} else {
-						err = jpeg.Encode(scaleFile, dst, &jpeg.Options{Quality: 100})
-						if err != nil {
-							doCopy = true
-						}
+						return nil, err
+					}
+					err = jpeg.Encode(scaleFile, dst, &jpeg.Options{Quality: 100})
+					if err != nil {
+						return nil, err
 					}
 				} else {
-					doCopy = true
+					io.Copy(scaleFile, file)
 				}
-			}
-		}
-		if doCopy {
-			file, err := os.Open(filePath)
-			if err != nil {
-				return nil, err
-			}
-			defer file.Close()
-			ok, _ = pathExists(scaleFilePath)
-			var scaleFile *os.File
-			if ok {
-				scaleFile, _ = os.Create(scaleFilePath)
 			} else {
-				scaleFile, _ = os.Open(scaleFilePath)
+				file, err := os.Open(filePath)
+				if err != nil {
+					return nil, err
+				}
+				defer file.Close()
+				scaleFile, _ := os.Create(scaleFilePath)
+				defer scaleFile.Close()
+				io.Copy(scaleFile, file)
 			}
-			defer scaleFile.Close()
-			io.Copy(scaleFile, file)
+
 		}
 		file, err := os.Open(scaleFilePath)
 		if err != nil {
