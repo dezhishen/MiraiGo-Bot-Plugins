@@ -7,7 +7,6 @@ COPY ./ .
 RUN cd /build && go build -tags netgo -ldflags="-w -s" -o miraigo cmd/main.go 
 
 FROM alpine:latest
-ENV 
 WORKDIR /data
 RUN apk add -U --repository http://mirrors.ustc.edu.cn/alpine/v3.13/main/ tzdata 
 COPY --from=builder /build/miraigo /usr/bin/miraigo 
