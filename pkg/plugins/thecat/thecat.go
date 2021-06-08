@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/plugins"
@@ -33,7 +34,7 @@ func (w Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 	if len(msg.Elements) == 1 && msg.Elements[0].Type() == message.Text {
 		v := msg.Elements[0]
 		field, ok := v.(*message.TextElement)
-		return ok && (field.Content == ".thecat" || field.Content == ".cat")
+		return ok && (field.Content == ".thecat" || field.Content == ".cat" || strings.Contains(field.Content, "来点猫猫图"))
 	}
 	return false
 }
