@@ -12,7 +12,10 @@ import (
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/command"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/plugins"
+	"github.com/sirupsen/logrus"
 )
+
+var logger = logrus.WithField("plugins", "forward")
 
 // Plugin 消息转发插件
 type Plugin struct {
@@ -115,8 +118,9 @@ func contains(s []int64, e int64) bool {
 	return false
 }
 func init() {
-	plugins.RegisterOnMessagePlugin(Plugin{})
 	accouts = getAdminUid()
+	logger.Info("当前管理员为:", accouts)
+	plugins.RegisterOnMessagePlugin(Plugin{})
 }
 
 func getImage(url string) ([]byte, error) {
