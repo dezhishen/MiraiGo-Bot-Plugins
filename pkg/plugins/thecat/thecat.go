@@ -12,7 +12,9 @@ import (
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/plugins"
 )
 
-var url = "https://api.thecatapi.com/v1/images/search?limit=1&size=med"
+var url = "https://api.thecatapi.com/v1/images/search"
+
+//?limit=1&size=med"
 
 // Plugin 猫猫图
 type Plugin struct {
