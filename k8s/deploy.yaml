@@ -44,7 +44,6 @@ spec:
                 configMapKeyRef:
                   name: bot-config
                   key: BOT_BAIDU_FANYI_KEY
-            - name: BOT_BAIDU_FANYI_ID
             - name: TZ     #本地Key
               value: Asia/Shanghai
             - name: LANG     #本地Key
