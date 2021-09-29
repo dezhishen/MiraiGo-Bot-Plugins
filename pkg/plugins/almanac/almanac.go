@@ -1,19 +1,23 @@
 package almanac
 
 import (
-	"errors"
+	"bytes"
 	"fmt"
+	"image/color"
+	"io/ioutil"
 	"math/rand"
-	"strconv"
+	"os"
 	"strings"
 	"time"
+
+	"github.com/fogleman/gg"
 
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/plugins"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/storage"
 )
 
-// Plugin almanac
+// Plugin jrrp
 type Plugin struct {
 	plugins.NoSortPlugin
 	plugins.NoInitPlugin
@@ -23,8 +27,8 @@ type Plugin struct {
 // PluginInfo PluginInfo
 func (p Plugin) PluginInfo() *plugins.PluginInfo {
 	return &plugins.PluginInfo{
-		ID:   "almanac",
-		Name: "almanac",
+		ID:   "jrrp",
+		Name: "jrrp",
 	}
 }
 
@@ -33,49 +37,115 @@ func (p Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 	if len(msg.Elements) == 1 && msg.Elements[0].Type() == message.Text {
 		v := msg.Elements[0]
 		field, ok := v.(*message.TextElement)
-		return ok && strings.HasPrefix(field.Content, ".almanac")
+		if !ok {
+			return false
+		}
+		if strings.HasPrefix(field.Content, "签到") {
+			return true
+		}
+		if strings.HasPrefix(field.Content, ".jrrp") {
+			return true
+		}
 	}
 	return false
 }
 
 // OnMessageEvent OnMessageEvent
 func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageResponse, error) {
-	result := &plugins.MessageResponse{}
-	timeNow := time.Now().Local()
-	score, err := getScore(timeNow, p.PluginInfo().ID, request.Sender.Uin, true)
+	result := &plugins.MessageResponse{
+		Elements: make([]message.IMessageElement, 1),
+	}
+	b, err := getImage(request.Sender.Uin)
 	if err != nil {
 		return nil, err
 	}
-	var elements []message.IMessageElement
-	elements = append(elements, message.NewText(fmt.Sprintf("[%v]今日人品: %v", request.GetNickName(), score)))
-
-	v := request.Elements[0]
-	field, _ := v.(*message.TextElement)
-	context := field.Content
-	params := strings.Split(context, " ")
-
-	if len(params) > 1 {
-		preDays, err := strconv.Atoi(params[1])
-		if err != nil {
-			return nil, errors.New("请输入一个7以内的正整数")
-		}
-		if preDays > 7 {
-			preDays = 7
-		}
-		for i := 1; i <= preDays; i++ {
-			timeNow = timeNow.Add(-1 * 24 * time.Hour)
-			score, err := getScore(timeNow, p.PluginInfo().ID, request.Sender.Uin, true)
-			if err != nil {
-				return nil, err
-			}
-			if score == 0 {
-				break
-			}
-			elements = append(elements, message.NewText(fmt.Sprintf("\n[%v]历史人品: %v", request.GetNickName(), score)))
-		}
+	var image message.IMessageElement
+	if plugins.GroupMessage == request.MessageType {
+		image, err = request.QQClient.UploadGroupImage(request.GroupCode, bytes.NewReader(b))
+	} else {
+		image, err = request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(b))
 	}
-	result.Elements = elements
+	if err != nil {
+		return nil, err
+	}
+	result.Elements[0] = image
 	return result, nil
+}
+
+func getImage(id int64) ([]byte, error) {
+	timeNow := time.Now().Local()
+	path := getFileName(id, timeNow)
+	b, err := getFile(id, path)
+	if err != nil {
+		return nil, err
+	}
+	if b != nil {
+		return b, err
+	}
+	err = randomFile(timeNow, "jrrp", id, true, path)
+	if err != nil {
+		return nil, err
+	}
+	return getFile(id, path)
+}
+
+func getFileName(id int64, t time.Time) string {
+	return fmt.Sprintf("./jrrp/%v-%v.png", id, timeToStr(t))
+}
+
+func getFile(id int64, path string) ([]byte, error) {
+	// url = strings.Replace(url, "large", "original", -1)
+	exists, _ := pathExists(path)
+	if exists {
+		file, err := os.Open(path)
+		if err != nil {
+			panic(err)
+		}
+		defer file.Close()
+		content, err := ioutil.ReadAll(file)
+		return content, err
+	}
+	return nil, nil
+}
+
+func randomFile(t time.Time, pid string, uid int64, genIfNil bool, path string) error {
+	r, err := getScore(t, pid, uid, true)
+	if err != nil {
+		return err
+	}
+	var score float32 = float32(r)
+	var text string
+	//大吉→吉→中吉→小吉→半吉→末吉→末小吉→凶→小凶→半凶→末凶→大凶
+	if score <= 9.090909 {
+		text = "大凶"
+	} else if score <= 9.090909*2 {
+		text = "末凶"
+	} else if score <= 9.090909*3 {
+		text = "半凶"
+	} else if score <= 9.090909*4 {
+		text = "小凶"
+	} else if score <= 9.090909*5 {
+		text = "凶"
+	} else if score <= 9.090909*6 {
+		text = "末小吉"
+	} else if score <= 9.090909*7 {
+		text = "末吉"
+	} else if score <= 9.090909*8 {
+		text = "半吉"
+	} else if score <= 9.090909*9 {
+		text = "小吉"
+	} else if score <= 9.090909*10 {
+		text = "中吉"
+	} else if score <= 9.090909*11 {
+		text = "吉"
+	} else {
+		text = "大吉"
+	}
+	err = CreatImage(text, path)
+	if err != nil {
+		return err
+	}
+	return err
 }
 
 func getScore(t time.Time, pid string, uid int64, genIfNil bool) (int, error) {
@@ -108,5 +178,44 @@ func timeToStr(t time.Time) string {
 }
 
 func init() {
+	exists, _ := pathExists("./jrrp")
+	if !exists {
+		os.Mkdir("./jrrp", 0777)
+	}
 	plugins.RegisterOnMessagePlugin(Plugin{})
+}
+
+func pathExists(path string) (bool, error) {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
+}
+
+func CreatImage(text string, path string) error {
+	//图片的宽度
+	var srcWidth float64 = 100
+	//图片的高度
+	var srcHeight float64 = 100
+	dc := gg.NewContext(int(srcWidth), int(srcHeight))
+	//设置背景色
+	dc.SetColor(color.White)
+	dc.Clear()
+	if strings.HasSuffix(text, "吉") {
+		dc.SetRGB255(255, 0, 0)
+	}
+	if err := dc.LoadFontFace("./assert/fonts/yasqht.ttf", 25); err != nil {
+		return err
+	}
+	sWidth, sHeight := dc.MeasureString(text)
+	dc.DrawString(text, (srcWidth-sWidth)/2, (srcHeight-sHeight)/2)
+	err := dc.SavePNG(path)
+	if err != nil {
+		return err
+	}
+	return nil
 }

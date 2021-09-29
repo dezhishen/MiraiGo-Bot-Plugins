@@ -1,10 +1,10 @@
 package main
 
 import (
+	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/almanac"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/calendar"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/haimage"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/hitokoto"
-	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/jrrp"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/lpl"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/mc"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/pixiv"

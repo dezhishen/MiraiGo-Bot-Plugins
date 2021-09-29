@@ -1,7 +1,13 @@
 package image
 
-import "testing"
+import (
+	"log"
+	"testing"
+)
 
 func TestCreatImage(t *testing.T) {
-	CreatImage("小吉")
+	err := CreatImage("吉吉吉", "out.png")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
