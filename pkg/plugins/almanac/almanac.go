@@ -207,8 +207,10 @@ func CreatImage(text string, path string) error {
 	dc.Clear()
 	if strings.HasSuffix(text, "吉") {
 		dc.SetRGB255(255, 0, 0)
+	} else {
+		dc.SetColor(color.Black)
 	}
-	if err := dc.LoadFontFace("./assert/fonts/yasqht.ttf", 25); err != nil {
+	if err := dc.LoadFontFace("/assert/fonts/yasqht.ttf", 25); err != nil {
 		return err
 	}
 	sWidth, sHeight := dc.MeasureString(text)

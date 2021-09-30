@@ -10,6 +10,7 @@ LABEL MAINTAINER=github.com/dezhiShen
 WORKDIR /data
 RUN apk add -U --repository http://mirrors.ustc.edu.cn/alpine/v3.13/main/ tzdata 
 COPY --from=builder /build/miraigo /usr/bin/miraigo 
+COPY --from=builder /build/assert /assert 
 RUN chmod +x /usr/bin/miraigo
 VOLUME /data
 HEALTHCHECK  --interval=5s --timeout=1s --start-period=5s --retries=3 CMD cat /data/health
