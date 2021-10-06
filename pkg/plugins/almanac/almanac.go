@@ -113,33 +113,15 @@ func randomFile(t time.Time, pid string, uid int64, genIfNil bool, path string) 
 	if err != nil {
 		return err
 	}
-	var score float32 = float32(r)
+	var score = r / 20
+	full := "★"
+	empty := "☆"
 	var text string
-	//大吉→吉→中吉→小吉→半吉→末吉→末小吉→凶→小凶→半凶→末凶→大凶
-	if score <= 9.090909 {
-		text = "大凶"
-	} else if score <= 9.090909*2 {
-		text = "末凶"
-	} else if score <= 9.090909*3 {
-		text = "半凶"
-	} else if score <= 9.090909*4 {
-		text = "小凶"
-	} else if score <= 9.090909*5 {
-		text = "凶"
-	} else if score <= 9.090909*6 {
-		text = "末小吉"
-	} else if score <= 9.090909*7 {
-		text = "末吉"
-	} else if score <= 9.090909*8 {
-		text = "半吉"
-	} else if score <= 9.090909*9 {
-		text = "小吉"
-	} else if score <= 9.090909*10 {
-		text = "中吉"
-	} else if score <= 9.090909*11 {
-		text = "吉"
-	} else {
-		text = "大吉"
+	for i := 1; i <= score; i++ {
+		text += full
+	}
+	for i := 1; i <= 5-score; i++ {
+		text += empty
 	}
 	err = CreatImage(text, path)
 	if err != nil {
@@ -205,12 +187,8 @@ func CreatImage(text string, path string) error {
 	//设置背景色
 	dc.SetColor(color.White)
 	dc.Clear()
-	if strings.HasSuffix(text, "吉") {
-		dc.SetRGB255(255, 0, 0)
-	} else {
-		dc.SetColor(color.Black)
-	}
-	if err := dc.LoadFontFace("/assert/fonts/yasqht.ttf", 25); err != nil {
+	dc.SetRGB255(255, 0, 0)
+	if err := dc.LoadFontFace("/assert/fonts/Symbola.ttf", 25); err != nil {
 		return err
 	}
 	sWidth, sHeight := dc.MeasureString(text)

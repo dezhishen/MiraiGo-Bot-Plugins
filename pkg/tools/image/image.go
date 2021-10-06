@@ -16,7 +16,7 @@ func CreatImage(text string, path string) error {
 	dc.SetColor(color.White)
 	dc.Clear()
 	dc.SetRGB255(255, 0, 0)
-	if err := dc.LoadFontFace("C:\\github\\plugins\\assert\\fonts\\yasqht.ttf", 25); err != nil {
+	if err := dc.LoadFontFace("C:\\github\\plugins\\assert\\fonts\\Symbola.ttf", 25); err != nil {
 		return err
 	}
 	sWidth, _ := dc.MeasureString(text)
