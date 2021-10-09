@@ -31,6 +31,7 @@ import (
 
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/bilifan"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/facesave"
+	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/rss"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/server"
 )
 
