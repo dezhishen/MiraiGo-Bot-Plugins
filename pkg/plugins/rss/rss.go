@@ -3,7 +3,6 @@ package rss
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -34,10 +33,10 @@ func (w Plugin) PluginInfo() *plugins.PluginInfo {
 
 // IsFireEvent 是否触发
 func (w Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
-	if len(msg.Elements) == 1 && msg.Elements[0].Type() == message.Text {
+	if len(msg.Elements) > 1 && msg.Elements[0].Type() == message.Text {
 		v := msg.Elements[0]
 		field, ok := v.(*message.TextElement)
-		return ok && field.Content == ".rss"
+		return ok && strings.HasPrefix(field.Content, ".rss")
 	}
 	return false
 }
@@ -46,12 +45,19 @@ type rssReq struct {
 	Event string `short:"e" long:"event" description:"动作" default:"add"`
 }
 
+var rss_prefix string = "rss.url:"
+var rss_url_distributor string = "rss-url.distributor:"
+
 // OnMessageEvent OnMessageEvent
 func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageResponse, error) {
 	var elements []message.IMessageElement
-	v := request.Elements[0]
-	field, _ := v.(*message.TextElement)
-	context := field.Content
+	context := ""
+	for _, v := range request.Elements {
+		if v.Type() == message.Text {
+			field, _ := v.(*message.TextElement)
+			context += (field.Content)
+		}
+	}
 	req := rssReq{}
 	commands, err := command.Parse(".rss", &req, strings.Split(context, " "))
 	if err != nil {
@@ -60,11 +66,17 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	if req.Event == "add" {
 		for i := 1; i < len(commands); i++ {
 			url := commands[i]
-			prefix := []byte("rss.url:" + url)
-			storage.Put([]byte(w.PluginInfo().ID), prefix, []byte(url))
+			// prefix := []byte(rss_prefix + url)
+			// storage.Put([]byte(w.PluginInfo().ID), prefix, []byte(url))
+			feed, err := setFeed(url, request)
+			if err != nil {
+				return nil, err
+			}
+			if feed != nil {
+				elements = append(elements, message.NewText("订阅成功:"+feed.Title))
+			}
 		}
 	}
-	elements = append(elements, message.NewText("订阅成功"))
 	return &plugins.MessageResponse{
 		Elements: elements,
 	}, nil
@@ -77,8 +89,8 @@ func init() {
 }
 
 type info struct {
-	Type string
-	Code uint64
+	Type string `json:"type"`
+	Code int64  `json:"code"`
 }
 type oneOfFeed struct {
 	Title     string
@@ -89,7 +101,7 @@ type oneOfFeed struct {
 
 // Run 回调
 func (t Plugin) Run(bot *bot.Bot) error {
-	prefix := []byte("rss.url")
+	prefix := []byte(rss_prefix)
 	var urls []string
 	storage.GetByPrefix([]byte(t.PluginInfo().ID), prefix, func(key, v []byte) error {
 		url := string(v)
@@ -97,7 +109,6 @@ func (t Plugin) Run(bot *bot.Bot) error {
 		return nil
 	})
 	for _, url := range urls {
-		prefix := []byte(fmt.Sprintf("rss-url.distributor.%v", url))
 		items, _ := update(url)
 		var feeds []oneOfFeed
 		for _, feedItem := range items {
@@ -114,32 +125,37 @@ func (t Plugin) Run(bot *bot.Bot) error {
 				coverSrc, exists := goquery.NewDocumentFromNode(images.Nodes[0]).Attr("src")
 				if exists {
 					e.CoverSrc = coverSrc
-					r, _ := http.DefaultClient.Get(url)
+					r, _ := http.DefaultClient.Get(coverSrc)
 					content, _ := ioutil.ReadAll(r.Body)
 					e.CoverByte = content
 				}
 			}
 			feeds = append(feeds, e)
 		}
-		storage.GetByPrefix([]byte(t.PluginInfo().ID), prefix, func(key, v []byte) error {
+		storage.GetByPrefix([]byte(t.PluginInfo().ID), []byte(rss_url_distributor+url), func(key, v []byte) error {
 			var info info
 			json.Unmarshal(v, &info)
-			if info.Type == "group" {
-				sendingMessage := &message.SendingMessage{}
-				for _, e := range feeds {
+
+			for _, e := range feeds {
+				if info.Type == "group" {
+					sendingMessage := &message.SendingMessage{}
 					sendingMessage.Append(message.NewText(e.Title + "\n"))
-					image, _ := bot.QQClient.UploadGroupImage(int64(info.Code), bytes.NewReader(e.CoverByte))
-					sendingMessage.Append(image)
-				}
-				bot.SendGroupMessage(int64(info.Code), sendingMessage)
-			} else {
-				sendingMessage := &message.SendingMessage{}
-				for _, e := range feeds {
+					if e.CoverByte != nil {
+						image, _ := bot.QQClient.UploadGroupImage(int64(info.Code), bytes.NewReader(e.CoverByte))
+						sendingMessage.Append(image)
+					}
+					sendingMessage.Append(message.NewText(e.Link))
+					bot.SendGroupMessage(int64(info.Code), sendingMessage)
+				} else {
+					sendingMessage := &message.SendingMessage{}
 					sendingMessage.Append(message.NewText(e.Title + "\n"))
-					image, _ := bot.QQClient.UploadPrivateImage(int64(info.Code), bytes.NewReader(e.CoverByte))
-					sendingMessage.Append(image)
+					if e.CoverByte != nil {
+						image, _ := bot.QQClient.UploadPrivateImage(int64(info.Code), bytes.NewReader(e.CoverByte))
+						sendingMessage.Append(image)
+					}
+					sendingMessage.Append(message.NewText(e.Link))
+					bot.SendPrivateMessage(int64(info.Code), sendingMessage)
 				}
-				bot.SendGroupMessage(int64(info.Code), sendingMessage)
 			}
 			return nil
 		})
@@ -156,11 +172,44 @@ func (t Plugin) Cron() string {
 var allFeed = make(map[string]*rss.Feed)
 
 func update(url string) ([]*rss.Item, error) {
-	feed, ok := allFeed[url]
+	feed, ok := getFeed(url)
 	if !ok {
 		feed, _ = rss.Fetch(url)
 		allFeed[url] = feed
 	}
 	feed.Update()
 	return feed.Items, nil
+}
+
+func getFeed(url string) (*rss.Feed, bool) {
+	feed, ok := allFeed[url]
+	return feed, ok
+}
+
+func setFeed(url string, req *plugins.MessageRequest) (*rss.Feed, error) {
+	feed, ok := getFeed(url)
+	rss_url_distributor_key :=
+		rss_url_distributor + url + string(req.MessageType)
+
+	distributorInfo := &info{
+		Type: string(req.MessageType),
+	}
+	if req.MessageType == "group" {
+		rss_url_distributor_key += string(rune(req.GroupCode))
+		distributorInfo.Code = req.GroupCode
+	} else {
+		rss_url_distributor_key += string(rune(req.Sender.Uin))
+		distributorInfo.Code = req.Sender.Uin
+	}
+	if !ok {
+		feed, err := rss.Fetch(url)
+		if err != nil {
+			return nil, err
+		}
+		allFeed[url] = feed
+		storage.Put([]byte(".rss"), []byte(rss_prefix), []byte(url))
+	}
+	jsonBytes, _ := json.Marshal(distributorInfo)
+	storage.Put([]byte(".rss"), []byte(rss_url_distributor_key), jsonBytes)
+	return feed, nil
 }
