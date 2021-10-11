@@ -39,7 +39,7 @@ func (w Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 }
 
 type rssReq struct {
-	Event string `short:"o" long:"options" description:"动作" default:"add"`
+	Event string `short:"e" long:"event" description:"动作" default:"add"`
 }
 
 var rss_prefix string = "rss.url:"
@@ -87,7 +87,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 				return nil, err
 			}
 			if feed != nil {
-				elements = append(elements, message.NewText("移除成功:"+feed.Title))
+				elements = append(elements, message.NewText("移除成功:"+feed.Title+"\n"))
 			} else {
 				elements = append(elements, message.NewText("当前未订阅"))
 			}
@@ -97,7 +97,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		if len(feeds) > 0 {
 			for _, e := range feeds {
 				elements = append(elements, message.NewText(
-					e.Title+": "+e.Link))
+					e.Title+": "+e.UpdateURL+"\n"))
 			}
 		} else {
 			elements = append(elements, message.NewText("当前无订阅"))
