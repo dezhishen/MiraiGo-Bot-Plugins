@@ -3,13 +3,16 @@ package rss
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"strings"
 
 	"github.com/Logiase/MiraiGo-Template/bot"
+	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/SlyMarbo/rss"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/command"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/plugins"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/storage"
@@ -25,11 +28,12 @@ type Plugin struct {
 
 var logger = logrus.WithField("bot-plugin", "rss")
 var cron = "0 */15 * * * ?"
+var pluginId = ".rss"
 
 // PluginInfo PluginInfo
 func (w Plugin) PluginInfo() *plugins.PluginInfo {
 	return &plugins.PluginInfo{
-		ID:   ".rss",
+		ID:   pluginId,
 		Name: "rss",
 	}
 }
@@ -68,38 +72,50 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 			if strings.TrimSpace(url) == "" {
 				continue
 			}
-			feed, err := setFeed(url, request)
+			err := listenFeed(url, request)
 			if err != nil {
 				return nil, err
 			}
-			if feed != nil {
-				elements = append(elements, message.NewText("订阅成功:"+feed.Title))
-			}
+			elements = append(elements, message.NewText("订阅成功:"+url))
 		}
 	} else if req.Event == "del" {
 		for i := 1; i < len(commands); i++ {
 			url := commands[i]
 			// prefix := []byte(rss_prefix + url)
 			// storage.Put([]byte(w.PluginInfo().ID), prefix, []byte(url))
-			feed, err := removeFeed(url, request)
+			err := unListenFeed(url, request)
 			if err != nil {
 				return nil, err
 			}
-			if feed != nil {
-				elements = append(elements, message.NewText("移除成功:"+feed.Title+"\n"))
-			} else {
-				elements = append(elements, message.NewText("当前未订阅"))
-			}
+			elements = append(elements, message.NewText("移除成功:"+url))
 		}
 	} else if req.Event == "list" {
-		feeds := getAllFeed(request)
-		if len(feeds) > 0 {
-			for _, e := range feeds {
-				elements = append(elements, message.NewText(
-					e.Title+": "+e.UpdateURL+"\n"))
+		urls := getAllFeed(request)
+		if len(urls) > 0 {
+			for _, e := range urls {
+				elements = append(elements, message.NewText(e+"\n"))
 			}
 		} else {
 			elements = append(elements, message.NewText("当前无订阅"))
+		}
+	} else if req.Event == "update" {
+		for i := 1; i < len(commands); i++ {
+			url := commands[i]
+			items, err := updateFeed(url)
+			if err != nil {
+				return nil, errors.New("更新失败" + err.Error())
+			}
+			feeds := items2Feeds(items)
+			for _, f := range feeds {
+				if request.MessageType == plugins.GroupMessage {
+					elements, _ = feed2MessageElements(f, request.QQClient, "group", request.GroupCode)
+				} else {
+					elements, _ = feed2MessageElements(f, request.QQClient, "private", request.Sender.Uin)
+				}
+				if err != nil {
+					return nil, err
+				}
+			}
 		}
 	}
 	return &plugins.MessageResponse{
@@ -136,31 +152,9 @@ func (t Plugin) Run(bot *bot.Bot) error {
 	})
 
 	for _, url := range urls {
-		items, _ := update(url)
-		var feeds []oneOfFeed
-		for _, feedItem := range items {
-			doc, err := goquery.NewDocumentFromReader(strings.NewReader(feedItem.Summary))
-			if err != nil {
-				continue
-			}
-			e := oneOfFeed{
-				Title: feedItem.Title,
-				Link:  feedItem.Link,
-			}
-			images := doc.Find("img")
-			if images != nil && len(images.Nodes) > 0 {
-				coverSrc, exists := goquery.NewDocumentFromNode(images.Nodes[0]).Attr("src")
-				if exists {
-					e.CoverSrc = coverSrc
-					r, _ := http.DefaultClient.Get(coverSrc)
-					content, _ := ioutil.ReadAll(r.Body)
-					e.CoverByte = content
-				}
-			}
-			feeds = append(feeds, e)
-		}
+		items, _ := updateFeed(url)
+		feeds := items2Feeds(items)
 		var infos []info
-
 		storage.GetByPrefix([]byte(t.PluginInfo().ID), []byte(rss_url_distributor+url), func(key, v []byte) error {
 			var info info
 			json.Unmarshal(v, &info)
@@ -168,28 +162,23 @@ func (t Plugin) Run(bot *bot.Bot) error {
 			return nil
 		})
 
-		for _, e := range feeds {
-			for _, info := range infos {
+		for _, info := range infos {
+			for _, oneFeed := range feeds {
+				elemens, err := feed2MessageElements(oneFeed, bot.QQClient, info.Type, info.Code)
+				if err != nil {
+					return err
+				}
 				if info.Type == "group" {
-					sendingMessage := &message.SendingMessage{}
-					sendingMessage.Append(message.NewText(e.Title + "\n"))
-					if e.CoverByte != nil {
-						image, _ := bot.QQClient.UploadGroupImage(int64(info.Code), bytes.NewReader(e.CoverByte))
-						sendingMessage.Append(image)
-					}
-					sendingMessage.Append(message.NewText(e.Link))
-					bot.SendGroupMessage(int64(info.Code), sendingMessage)
+					bot.SendGroupMessage(info.Code, &message.SendingMessage{
+						Elements: elemens,
+					})
 				} else {
-					sendingMessage := &message.SendingMessage{}
-					sendingMessage.Append(message.NewText(e.Title + "\n"))
-					if e.CoverByte != nil {
-						image, _ := bot.QQClient.UploadPrivateImage(int64(info.Code), bytes.NewReader(e.CoverByte))
-						sendingMessage.Append(image)
-					}
-					sendingMessage.Append(message.NewText(e.Link))
-					bot.SendPrivateMessage(int64(info.Code), sendingMessage)
+					bot.SendPrivateMessage(info.Code, &message.SendingMessage{
+						Elements: elemens,
+					})
 				}
 			}
+
 		}
 	}
 	// bot.QQClient.Send
@@ -199,4 +188,51 @@ func (t Plugin) Run(bot *bot.Bot) error {
 // Cron cron表达式
 func (t Plugin) Cron() string {
 	return cron
+}
+
+func items2Feeds(items []*rss.Item) []oneOfFeed {
+	var feeds []oneOfFeed
+	for _, feedItem := range items {
+		doc, err := goquery.NewDocumentFromReader(strings.NewReader(feedItem.Summary))
+		if err != nil {
+			continue
+		}
+		e := oneOfFeed{
+			Title: feedItem.Title,
+			Link:  feedItem.Link,
+		}
+		images := doc.Find("img")
+		if images != nil && len(images.Nodes) > 0 {
+			coverSrc, exists := goquery.NewDocumentFromNode(images.Nodes[0]).Attr("src")
+			if exists {
+				e.CoverSrc = coverSrc
+				r, _ := http.DefaultClient.Get(coverSrc)
+				content, _ := ioutil.ReadAll(r.Body)
+				e.CoverByte = content
+			}
+		}
+		feeds = append(feeds, e)
+	}
+	return feeds
+}
+func feed2MessageElements(oneOfFeed oneOfFeed, client *client.QQClient, messageType string, code int64) ([]message.IMessageElement, error) {
+	var messageElement []message.IMessageElement
+	if messageType == "group" {
+		sendingMessage := &message.SendingMessage{}
+		sendingMessage.Append(message.NewText(oneOfFeed.Title + "\n"))
+		if oneOfFeed.CoverByte != nil {
+			image, _ := client.UploadGroupImage(code, bytes.NewReader(oneOfFeed.CoverByte))
+			messageElement = append(messageElement, image)
+		}
+		messageElement = append(messageElement, message.NewText(oneOfFeed.Link))
+	} else {
+		sendingMessage := &message.SendingMessage{}
+		sendingMessage.Append(message.NewText(oneOfFeed.Title + "\n"))
+		if oneOfFeed.CoverByte != nil {
+			image, _ := client.UploadPrivateImage(code, bytes.NewReader(oneOfFeed.CoverByte))
+			messageElement = append(messageElement, image)
+		}
+		messageElement = append(messageElement, message.NewText(oneOfFeed.Link))
+	}
+	return messageElement, nil
 }

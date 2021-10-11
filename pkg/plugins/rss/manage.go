@@ -14,51 +14,9 @@ var rss_prefix string = "rss.url:"
 var rss_url_distributor string = "rss-url.distributor:"
 var rss_url_date string = "rss-url.date:"
 
-func update(url string) ([]*rss.Item, error) {
-	logger.Infof("开始抓取更新:%s", url)
-	feed, ok := getFeed(url)
-	if !ok {
-		logger.Infof("订阅地址不存在:%s", url)
-		return nil, errors.New("订阅地址不存在")
-	}
-	feed.Update()
-	var results []*rss.Item
-	lastDate, _ := storage.GetValue([]byte(".rss"), []byte(rss_url_date+url))
-	for i, e := range feed.Items {
-		if lastDate != nil {
-			tDate := storage.BytesToInt(lastDate)
-			if int(e.Date.Unix()) <= tDate {
-				break
-			}
-		}
-		if i == 0 {
-			storage.Put([]byte(".rss"), []byte(rss_url_date+url), storage.IntToBytes(int(e.Date.Unix())))
-		}
-		results = append(results, e)
-	}
+var feeds = make(map[string]*rss.Feed)
 
-	logger.Infof("数量:%s", len(results))
-	logger.Infof("结束更新:%s", url)
-	return results, nil
-}
-
-func getFeed(url string) (*rss.Feed, bool) {
-	var feed *rss.Feed
-	b, _ := storage.GetValue([]byte(".rss"), []byte(rss_prefix+url))
-	if b == nil {
-		return nil, false
-	}
-	var err error
-	feed, err = rss.Fetch(url)
-	if err != nil {
-		logger.Infof("发生异常[%s],url:[%s]", err.Error(), url)
-		return nil, false
-	}
-	return feed, true
-}
-
-func setFeed(url string, req *plugins.MessageRequest) (*rss.Feed, error) {
-	feed, ok := getFeed(url)
+func listenFeed(url string, req *plugins.MessageRequest) error {
 	rss_url_distributor_key :=
 		rss_url_distributor + url + string(req.MessageType)
 	distributorInfo := &info{
@@ -71,52 +29,96 @@ func setFeed(url string, req *plugins.MessageRequest) (*rss.Feed, error) {
 		rss_url_distributor_key += fmt.Sprintf(":%v", req.Sender.Uin)
 		distributorInfo.Code = req.Sender.Uin
 	}
-	if !ok {
-		var err error
-		feed, err = rss.Fetch(url)
-		if err != nil {
-			return nil, err
-		}
-		storage.Put([]byte(".rss"), []byte(rss_prefix+url), []byte(url))
-	}
+	storage.Put([]byte(".rss"), []byte(rss_prefix+url), []byte(url))
 	jsonBytes, _ := json.Marshal(distributorInfo)
 	storage.Put([]byte(".rss"), []byte(rss_url_distributor_key), jsonBytes)
-	return feed, nil
+	return nil
+}
+func unListenFeed(url string, req *plugins.MessageRequest) error {
+	rss_url_distributor_key :=
+		rss_url_distributor + url + string(req.MessageType)
+	if req.MessageType == "group" {
+		rss_url_distributor_key += fmt.Sprintf(":%v", req.GroupCode)
+	} else {
+		rss_url_distributor_key += fmt.Sprintf(":%v", req.Sender.Uin)
+	}
+	storage.Delete([]byte(".rss"), []byte(rss_url_distributor_key))
+	var hasRss = false
+	storage.GetByPrefix([]byte(".rss"), []byte(rss_url_distributor+url), func(b1, b2 []byte) error {
+		if hasRss {
+			return nil
+		}
+		hasRss = true
+		return nil
+	})
+	if !hasRss {
+		storage.Delete([]byte(".rss"), []byte(rss_prefix+url))
+	}
+	return nil
 }
 
-func removeFeed(url string, req *plugins.MessageRequest) (*rss.Feed, error) {
-	feed, ok := getFeed(url)
-	if ok {
-		rss_url_distributor_key :=
-			rss_url_distributor + url + string(req.MessageType)
-		if req.MessageType == "group" {
-			rss_url_distributor_key += fmt.Sprintf(":%v", req.GroupCode)
-		} else {
-			rss_url_distributor_key += fmt.Sprintf(":%v", req.Sender.Uin)
-		}
-		storage.Delete([]byte(".rss"), []byte(rss_url_distributor_key))
-		var hasRss = false
-		storage.GetByPrefix([]byte(".rss"), []byte(rss_url_distributor+url), func(b1, b2 []byte) error {
-			if hasRss {
-				return nil
-			}
-			hasRss = true
-			return nil
-		})
-		if !hasRss {
-			storage.Delete([]byte(".rss"), []byte(rss_prefix+url))
+func getFeed(url string) (*rss.Feed, bool, error) {
+	feed, ok := feeds[url]
+	if !ok {
+		feed = initFeed(url)
+		if feed == nil {
+			return nil, false, errors.New("未订阅的地址")
 		}
 	}
-	return feed, nil
+	return feed, ok, nil
 }
 
-func getAllFeed(req *plugins.MessageRequest) []*rss.Feed {
+func updateFeed(url string) ([]*rss.Item, error) {
+	logger.Infof("开始抓取更新:%s", url)
+	feed, ok, err := getFeed(url)
+	if err != nil {
+		return nil, err
+	}
+	if ok {
+		feed.Update()
+	}
+	var results []*rss.Item
+	lastDateByte, _ := storage.GetValue([]byte(".rss"), []byte(rss_url_date+url))
+	lastDate := storage.BytesToInt(lastDateByte)
+	max := lastDate
+	for _, e := range feed.Items {
+		var now = int(e.Date.Unix())
+		if now <= lastDate {
+			continue
+		}
+		if int(now) > max {
+			max = int(now)
+		}
+		results = append(results, e)
+	}
+	storage.Put([]byte(".rss"), []byte(rss_url_date+url), storage.IntToBytes(max))
+	logger.Infof("数量:%s", len(results))
+	logger.Infof("结束更新:%s", url)
+	return results, nil
+}
+
+func initFeed(url string) *rss.Feed {
+	var feed *rss.Feed
+	b, _ := storage.GetValue([]byte(".rss"), []byte(rss_prefix+url))
+	if b == nil {
+		return nil
+	}
+	var err error
+	feed, err = rss.Fetch(url)
+	if err != nil {
+		logger.Infof("初始化feed流,发生异常[%s],url:[%s]", err.Error(), url)
+		return nil
+	}
+	return feed
+}
+
+func getAllFeed(req *plugins.MessageRequest) []string {
 	var urls []string
 	storage.GetByPrefix([]byte(".rss"), []byte(rss_prefix), func(b1, b2 []byte) error {
 		urls = append(urls, string(b2))
 		return nil
 	})
-	var result []*rss.Feed
+	var result []string
 	for _, url := range urls {
 		rss_url_distributor_key :=
 			rss_url_distributor + url + string(req.MessageType)
@@ -127,9 +129,11 @@ func getAllFeed(req *plugins.MessageRequest) []*rss.Feed {
 		}
 		v, _ := storage.GetValue([]byte(".rss"), []byte(rss_url_distributor_key))
 		if v != nil {
-			f, ok := getFeed(url)
+			feed, ok := feeds[url]
 			if ok {
-				result = append(result, f)
+				result = append(result, feed.Title+":"+url)
+			} else {
+				result = append(result, url)
 			}
 		}
 	}
