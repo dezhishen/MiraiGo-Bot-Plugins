@@ -3,6 +3,7 @@ package rss
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -195,13 +196,10 @@ func (t Plugin) Cron() string {
 	return "0 */5 * * * ?"
 }
 
-var allFeed = make(map[string]*rss.Feed)
-
 func update(url string) ([]*rss.Item, error) {
-	feed, ok := getFeed(url, true)
+	feed, ok := getFeed(url)
 	if !ok {
-		feed, _ = rss.Fetch(url)
-		allFeed[url] = feed
+		return nil, errors.New("订阅地址不存在")
 	}
 	feed.Update()
 	var results []*rss.Item
@@ -221,31 +219,25 @@ func update(url string) ([]*rss.Item, error) {
 	return results, nil
 }
 
-func getFeed(url string, generate bool) (*rss.Feed, bool) {
-	_, ok := allFeed[url]
-	if generate && !ok {
-		storage.Get([]byte(".rss"), []byte(rss_prefix+url), func(b []byte) error {
-			if b == nil {
-				return nil
-			}
-			tUrl := string(b)
-			feed, err := rss.Fetch(tUrl)
-			if err != nil {
-				return err
-			}
-			ok = true
-			allFeed[url] = feed
-			return nil
-		})
+func getFeed(url string) (*rss.Feed, bool) {
+	var feed *rss.Feed
+	b, _ := storage.GetValue([]byte(".rss"), []byte(rss_prefix+url))
+	if b == nil {
+		return nil, false
 	}
-	return allFeed[url], ok
+	tUrl := string(b)
+	var err error
+	feed, err = rss.Fetch(tUrl)
+	if err != nil {
+		return nil, false
+	}
+	return feed, true
 }
 
 func setFeed(url string, req *plugins.MessageRequest) (*rss.Feed, error) {
-	_, ok := getFeed(url, false)
+	feed, ok := getFeed(url)
 	rss_url_distributor_key :=
 		rss_url_distributor + url + string(req.MessageType)
-
 	distributorInfo := &info{
 		Type: string(req.MessageType),
 	}
@@ -257,20 +249,20 @@ func setFeed(url string, req *plugins.MessageRequest) (*rss.Feed, error) {
 		distributorInfo.Code = req.Sender.Uin
 	}
 	if !ok {
-		feed, err := rss.Fetch(url)
+		var err error
+		feed, err = rss.Fetch(url)
 		if err != nil {
 			return nil, err
 		}
-		allFeed[url] = feed
 		storage.Put([]byte(".rss"), []byte(rss_prefix+url), []byte(url))
 	}
 	jsonBytes, _ := json.Marshal(distributorInfo)
 	storage.Put([]byte(".rss"), []byte(rss_url_distributor_key), jsonBytes)
-	return allFeed[url], nil
+	return feed, nil
 }
 
 func removeFeed(url string, req *plugins.MessageRequest) (*rss.Feed, error) {
-	feed, ok := getFeed(url, true)
+	feed, ok := getFeed(url)
 	if ok {
 		rss_url_distributor_key :=
 			rss_url_distributor + url + string(req.MessageType)
@@ -312,7 +304,7 @@ func getAllFeed(req *plugins.MessageRequest) []*rss.Feed {
 		}
 		v, _ := storage.GetValue([]byte(".rss"), []byte(rss_url_distributor_key))
 		if v != nil {
-			f, ok := getFeed(url, true)
+			f, ok := getFeed(url)
 			if ok {
 				result = append(result, f)
 			}
