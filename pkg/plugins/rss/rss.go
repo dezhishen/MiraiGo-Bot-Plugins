@@ -130,11 +130,13 @@ type oneOfFeed struct {
 func (t Plugin) Run(bot *bot.Bot) error {
 	prefix := []byte(rss_prefix)
 	var urls []string
+
 	storage.GetByPrefix([]byte(t.PluginInfo().ID), prefix, func(key, v []byte) error {
 		url := string(v)
 		urls = append(urls, url)
 		return nil
 	})
+
 	for _, url := range urls {
 		items, _ := update(url)
 		var feeds []oneOfFeed
@@ -159,11 +161,17 @@ func (t Plugin) Run(bot *bot.Bot) error {
 			}
 			feeds = append(feeds, e)
 		}
+		var infos []info
+
 		storage.GetByPrefix([]byte(t.PluginInfo().ID), []byte(rss_url_distributor+url), func(key, v []byte) error {
 			var info info
 			json.Unmarshal(v, &info)
+			infos = append(infos, info)
+			return nil
+		})
 
-			for _, e := range feeds {
+		for _, e := range feeds {
+			for _, info := range infos {
 				if info.Type == "group" {
 					sendingMessage := &message.SendingMessage{}
 					sendingMessage.Append(message.NewText(e.Title + "\n"))
@@ -184,8 +192,7 @@ func (t Plugin) Run(bot *bot.Bot) error {
 					bot.SendPrivateMessage(int64(info.Code), sendingMessage)
 				}
 			}
-			return nil
-		})
+		}
 	}
 	// bot.QQClient.Send
 	return nil
