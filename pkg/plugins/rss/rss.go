@@ -166,7 +166,7 @@ func (t Plugin) Run(bot *bot.Bot) error {
 
 // Cron cron表达式
 func (t Plugin) Cron() string {
-	return "0 */5 * * * ?"
+	return "0 */1 * * * ?"
 }
 
 var allFeed = make(map[string]*rss.Feed)
@@ -179,16 +179,10 @@ func update(url string) ([]*rss.Item, error) {
 	}
 	feed.Update()
 	var results []*rss.Item
-	for i, e := range feed.Items {
-		lastDate, _ := storage.GetValue([]byte(".rss"), []byte(rss_prefix+url+":last"))
-		if lastDate != nil {
-			tDate := storage.BytesToInt(lastDate)
-			if int(e.Date.Unix()) <= tDate {
-				break
-			}
-		}
-		if i == 0 {
-			storage.Put([]byte(".rss"), []byte(rss_prefix+url+":last"), storage.IntToBytes(int(e.Date.Unix())))
+	// lastDate, _ := storage.GetValue([]byte(".rss"), []byte(rss_prefix+url+":last"))
+	for _, e := range feed.Items {
+		if e.Read {
+			break
 		}
 		results = append(results, e)
 	}
