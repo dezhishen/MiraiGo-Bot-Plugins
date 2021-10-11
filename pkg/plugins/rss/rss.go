@@ -33,16 +33,13 @@ func (w Plugin) PluginInfo() *plugins.PluginInfo {
 
 // IsFireEvent 是否触发
 func (w Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
-	if len(msg.Elements) > 1 && msg.Elements[0].Type() == message.Text {
-		v := msg.Elements[0]
-		field, ok := v.(*message.TextElement)
-		return ok && strings.HasPrefix(field.Content, ".rss")
-	}
-	return false
+	v := msg.Elements[0]
+	field, ok := v.(*message.TextElement)
+	return ok && strings.HasPrefix(field.Content, ".rss")
 }
 
 type rssReq struct {
-	Event string `short:"e" long:"event" description:"动作" default:"add"`
+	Event string `short:"o" long:"options" description:"动作" default:"add"`
 }
 
 var rss_prefix string = "rss.url:"
@@ -69,6 +66,9 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 			url := commands[i]
 			// prefix := []byte(rss_prefix + url)
 			// storage.Put([]byte(w.PluginInfo().ID), prefix, []byte(url))
+			if strings.TrimSpace(url) == "" {
+				continue
+			}
 			feed, err := setFeed(url, request)
 			if err != nil {
 				return nil, err
@@ -94,7 +94,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		}
 	} else if req.Event == "list" {
 		feeds := getAllFeed(request)
-		if feeds != nil && len(feeds) > 0 {
+		if len(feeds) > 0 {
 			for _, e := range feeds {
 				elements = append(elements, message.NewText(
 					e.Title+": "+e.Link))
