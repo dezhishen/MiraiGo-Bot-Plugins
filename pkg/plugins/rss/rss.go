@@ -203,7 +203,7 @@ func update(url string) ([]*rss.Item, error) {
 			}
 		}
 		if i == 0 {
-			storage.Put([]byte(".rss"), []byte(rss_prefix+url+":last"), storage.IntToBytes(int(e.Date.Unix())))
+			storage.Put([]byte(".rss"), []byte(rss_prefix+"last:"+url), storage.IntToBytes(int(e.Date.Unix())))
 		}
 		results = append(results, e)
 	}
