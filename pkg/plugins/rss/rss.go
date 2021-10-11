@@ -87,6 +87,8 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 			}
 			if feed != nil {
 				elements = append(elements, message.NewText("移除成功:"+feed.Title))
+			} else {
+				elements = append(elements, message.NewText("当前未订阅"))
 			}
 		}
 	}
@@ -185,7 +187,7 @@ func (t Plugin) Cron() string {
 var allFeed = make(map[string]*rss.Feed)
 
 func update(url string) ([]*rss.Item, error) {
-	feed, ok := getFeed(url)
+	feed, ok := getFeed(url, true)
 	if !ok {
 		feed, _ = rss.Fetch(url)
 		allFeed[url] = feed
@@ -208,13 +210,28 @@ func update(url string) ([]*rss.Item, error) {
 	return results, nil
 }
 
-func getFeed(url string) (*rss.Feed, bool) {
-	feed, ok := allFeed[url]
-	return feed, ok
+func getFeed(url string, generate bool) (*rss.Feed, bool) {
+	_, ok := allFeed[url]
+	if generate && !ok {
+		storage.Get([]byte(".rss"), []byte(rss_prefix+url), func(b []byte) error {
+			if b == nil {
+				return nil
+			}
+			tUrl := string(b)
+			feed, err := rss.Fetch(tUrl)
+			if err != nil {
+				return err
+			}
+			ok = true
+			allFeed[url] = feed
+			return nil
+		})
+	}
+	return allFeed[url], ok
 }
 
 func setFeed(url string, req *plugins.MessageRequest) (*rss.Feed, error) {
-	feed, ok := getFeed(url)
+	_, ok := getFeed(url, false)
 	rss_url_distributor_key :=
 		rss_url_distributor + url + string(req.MessageType)
 
@@ -238,11 +255,11 @@ func setFeed(url string, req *plugins.MessageRequest) (*rss.Feed, error) {
 	}
 	jsonBytes, _ := json.Marshal(distributorInfo)
 	storage.Put([]byte(".rss"), []byte(rss_url_distributor_key), jsonBytes)
-	return feed, nil
+	return allFeed[url], nil
 }
 
 func removeFeed(url string, req *plugins.MessageRequest) (*rss.Feed, error) {
-	feed, ok := getFeed(url)
+	feed, ok := getFeed(url, true)
 	if ok {
 		rss_url_distributor_key :=
 			rss_url_distributor + url + string(req.MessageType)
