@@ -23,6 +23,9 @@ type Plugin struct {
 	plugins.AlwaysNotFireNextEventPlugin
 }
 
+var logger = logrus.WithField("bot-plugin", "rss")
+var cron = "0 */15 * * * ?"
+
 // PluginInfo PluginInfo
 func (w Plugin) PluginInfo() *plugins.PluginInfo {
 	return &plugins.PluginInfo{
@@ -121,8 +124,6 @@ type oneOfFeed struct {
 	CoverByte []byte
 }
 
-var logger = logrus.WithField("bot-plugin", "rss")
-
 // Run 回调
 func (t Plugin) Run(bot *bot.Bot) error {
 	prefix := []byte(rss_prefix)
@@ -197,5 +198,5 @@ func (t Plugin) Run(bot *bot.Bot) error {
 
 // Cron cron表达式
 func (t Plugin) Cron() string {
-	return "0 */5 * * * ?"
+	return cron
 }

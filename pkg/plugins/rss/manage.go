@@ -48,10 +48,10 @@ func getFeed(url string) (*rss.Feed, bool) {
 	if b == nil {
 		return nil, false
 	}
-	tUrl := string(b)
 	var err error
-	feed, err = rss.Fetch(tUrl)
+	feed, err = rss.Fetch(url)
 	if err != nil {
+		logger.Infof("发生异常[%s],url:[%s]", err.Error(), url)
 		return nil, false
 	}
 	return feed, true
