@@ -47,6 +47,7 @@ type rssReq struct {
 
 var rss_prefix string = "rss.url:"
 var rss_url_distributor string = "rss-url.distributor:"
+var rss_url_date string = "rss-url.date:"
 
 // OnMessageEvent OnMessageEvent
 func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.MessageResponse, error) {
@@ -194,7 +195,7 @@ func update(url string) ([]*rss.Item, error) {
 	}
 	feed.Update()
 	var results []*rss.Item
-	lastDate, _ := storage.GetValue([]byte(".rss"), []byte(rss_prefix+url+":last"))
+	lastDate, _ := storage.GetValue([]byte(".rss"), []byte(rss_url_date+url))
 	for i, e := range feed.Items {
 		if lastDate != nil {
 			tDate := storage.BytesToInt(lastDate)
@@ -203,7 +204,7 @@ func update(url string) ([]*rss.Item, error) {
 			}
 		}
 		if i == 0 {
-			storage.Put([]byte(".rss"), []byte(rss_prefix+"last:"+url), storage.IntToBytes(int(e.Date.Unix())))
+			storage.Put([]byte(".rss"), []byte(rss_url_date+url), storage.IntToBytes(int(e.Date.Unix())))
 		}
 		results = append(results, e)
 	}
