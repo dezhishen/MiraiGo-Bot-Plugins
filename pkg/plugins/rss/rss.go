@@ -178,7 +178,21 @@ func update(url string) ([]*rss.Item, error) {
 		allFeed[url] = feed
 	}
 	feed.Update()
-	return feed.Items, nil
+	var results []*rss.Item
+	for i, e := range feed.Items {
+		lastDate, _ := storage.GetValue([]byte(".rss"), []byte(rss_prefix+url+":last"))
+		if lastDate != nil {
+			tDate := storage.BytesToInt(lastDate)
+			if int(e.Date.Unix()) <= tDate {
+				break
+			}
+		}
+		if i == 0 {
+			storage.Put([]byte(".rss"), []byte(rss_prefix+url+":last"), storage.IntToBytes(int(e.Date.Unix())))
+		}
+		results = append(results, e)
+	}
+	return results, nil
 }
 
 func getFeed(url string) (*rss.Feed, bool) {
