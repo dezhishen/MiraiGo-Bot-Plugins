@@ -166,7 +166,7 @@ func (t Plugin) Run(bot *bot.Bot) error {
 
 // Cron cron表达式
 func (t Plugin) Cron() string {
-	return "0 */1 * * * ?"
+	return "0 */5 * * * ?"
 }
 
 var allFeed = make(map[string]*rss.Feed)
