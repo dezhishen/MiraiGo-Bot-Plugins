@@ -76,6 +76,19 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 				elements = append(elements, message.NewText("订阅成功:"+feed.Title))
 			}
 		}
+	} else if req.Event == "del" {
+		for i := 1; i < len(commands); i++ {
+			url := commands[i]
+			// prefix := []byte(rss_prefix + url)
+			// storage.Put([]byte(w.PluginInfo().ID), prefix, []byte(url))
+			feed, err := removeFeed(url, request)
+			if err != nil {
+				return nil, err
+			}
+			if feed != nil {
+				elements = append(elements, message.NewText("移除成功:"+feed.Title))
+			}
+		}
 	}
 	return &plugins.MessageResponse{
 		Elements: elements,
@@ -221,9 +234,35 @@ func setFeed(url string, req *plugins.MessageRequest) (*rss.Feed, error) {
 			return nil, err
 		}
 		allFeed[url] = feed
-		storage.Put([]byte(".rss"), []byte(rss_prefix), []byte(url))
+		storage.Put([]byte(".rss"), []byte(rss_prefix+url), []byte(url))
 	}
 	jsonBytes, _ := json.Marshal(distributorInfo)
 	storage.Put([]byte(".rss"), []byte(rss_url_distributor_key), jsonBytes)
+	return feed, nil
+}
+
+func removeFeed(url string, req *plugins.MessageRequest) (*rss.Feed, error) {
+	feed, ok := getFeed(url)
+	if ok {
+		rss_url_distributor_key :=
+			rss_url_distributor + url + string(req.MessageType)
+		if req.MessageType == "group" {
+			rss_url_distributor_key += string(rune(req.GroupCode))
+		} else {
+			rss_url_distributor_key += string(rune(req.Sender.Uin))
+		}
+		storage.Delete([]byte(".rss"), []byte(rss_url_distributor_key))
+		var hasRss = false
+		storage.GetByPrefix([]byte(".rss"), []byte(rss_url_distributor+url), func(b1, b2 []byte) error {
+			if hasRss {
+				return nil
+			}
+			hasRss = true
+			return nil
+		})
+		if !hasRss {
+			storage.Delete([]byte(".rss"), []byte(rss_prefix+url))
+		}
+	}
 	return feed, nil
 }
