@@ -13,6 +13,7 @@ import (
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/command"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/plugins"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/storage"
+	"github.com/sirupsen/logrus"
 )
 
 // Plugin menhear
@@ -119,6 +120,8 @@ type oneOfFeed struct {
 	CoverSrc  string
 	CoverByte []byte
 }
+
+var logger = logrus.WithField("bot-plugin", "rss")
 
 // Run 回调
 func (t Plugin) Run(bot *bot.Bot) error {

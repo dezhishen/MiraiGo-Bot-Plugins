@@ -15,8 +15,10 @@ var rss_url_distributor string = "rss-url.distributor:"
 var rss_url_date string = "rss-url.date:"
 
 func update(url string) ([]*rss.Item, error) {
+	logger.Infof("开始抓取更新:%s", url)
 	feed, ok := getFeed(url)
 	if !ok {
+		logger.Infof("订阅地址不存在:%s", url)
 		return nil, errors.New("订阅地址不存在")
 	}
 	feed.Update()
@@ -34,6 +36,9 @@ func update(url string) ([]*rss.Item, error) {
 		}
 		results = append(results, e)
 	}
+
+	logger.Infof("数量:%s", len(results))
+	logger.Infof("结束更新:%s", url)
 	return results, nil
 }
 
