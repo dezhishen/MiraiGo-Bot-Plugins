@@ -92,6 +92,16 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 				elements = append(elements, message.NewText("当前未订阅"))
 			}
 		}
+	} else if req.Event == "list" {
+		feeds := getAllFeed(request)
+		if feeds != nil && len(feeds) > 0 {
+			for _, e := range feeds {
+				elements = append(elements, message.NewText(
+					e.Title+": "+e.Link))
+			}
+		} else {
+			elements = append(elements, message.NewText("当前无订阅"))
+		}
 	}
 	return &plugins.MessageResponse{
 		Elements: elements,
@@ -283,4 +293,30 @@ func removeFeed(url string, req *plugins.MessageRequest) (*rss.Feed, error) {
 		}
 	}
 	return feed, nil
+}
+
+func getAllFeed(req *plugins.MessageRequest) []*rss.Feed {
+	var urls []string
+	storage.GetByPrefix([]byte(".rss"), []byte(rss_prefix), func(b1, b2 []byte) error {
+		urls = append(urls, string(b2))
+		return nil
+	})
+	var result []*rss.Feed
+	for _, url := range urls {
+		rss_url_distributor_key :=
+			rss_url_distributor + url + string(req.MessageType)
+		if req.MessageType == "group" {
+			rss_url_distributor_key += string(rune(req.GroupCode))
+		} else {
+			rss_url_distributor_key += string(rune(req.Sender.Uin))
+		}
+		v, _ := storage.GetValue([]byte(".rss"), []byte(rss_url_distributor_key))
+		if v != nil {
+			f, ok := getFeed(url, true)
+			if ok {
+				result = append(result, f)
+			}
+		}
+	}
+	return result
 }
