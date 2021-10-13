@@ -100,7 +100,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 			elements = append(elements, message.NewText("当前无订阅"))
 		}
 	} else if req.Event == "update" {
-		now := int64(time.Now().Unix()%900) * 900
+		now := int64(time.Now().Unix()/900) * 900
 		for i := 1; i < len(commands); i++ {
 			url := commands[i]
 			items, err := updateFeed(url, now)
