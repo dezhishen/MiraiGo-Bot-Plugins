@@ -28,9 +28,9 @@ func listenFeed(url string, req *plugins.MessageRequest) error {
 		rss_url_distributor_key += fmt.Sprintf(":%v", req.Sender.Uin)
 		distributorInfo.Code = req.Sender.Uin
 	}
-	storage.Put([]byte(".rss"), []byte(rss_prefix+url), []byte(url))
+	storage.Put([]byte(pluginId), []byte(rss_prefix+url), []byte(url))
 	jsonBytes, _ := json.Marshal(distributorInfo)
-	storage.Put([]byte(".rss"), []byte(rss_url_distributor_key), jsonBytes)
+	storage.Put([]byte(pluginId), []byte(rss_url_distributor_key), jsonBytes)
 	return nil
 }
 func unListenFeed(url string, req *plugins.MessageRequest) error {
@@ -41,9 +41,9 @@ func unListenFeed(url string, req *plugins.MessageRequest) error {
 	} else {
 		rss_url_distributor_key += fmt.Sprintf(":%v", req.Sender.Uin)
 	}
-	storage.Delete([]byte(".rss"), []byte(rss_url_distributor_key))
+	storage.Delete([]byte(pluginId), []byte(rss_url_distributor_key))
 	var hasRss = false
-	storage.GetByPrefix([]byte(".rss"), []byte(rss_url_distributor+url), func(b1, b2 []byte) error {
+	storage.GetByPrefix([]byte(pluginId), []byte(rss_url_distributor+url), func(b1, b2 []byte) error {
 		if hasRss {
 			return nil
 		}
@@ -51,7 +51,7 @@ func unListenFeed(url string, req *plugins.MessageRequest) error {
 		return nil
 	})
 	if !hasRss {
-		storage.Delete([]byte(".rss"), []byte(rss_prefix+url))
+		storage.Delete([]byte(pluginId), []byte(rss_prefix+url))
 	}
 	return nil
 }
@@ -77,7 +77,7 @@ func updateFeed(url string, d int64) ([]*rss.Item, error) {
 		feed.Update()
 	}
 	var results []*rss.Item
-	// lastDateByte, _ := storage.GetValue([]byte(".rss"), []byte(rss_url_date+url))
+	// lastDateByte, _ := storage.GetValue([]byte(pluginId), []byte(rss_url_date+url))
 	lastDate := d
 	for _, e := range feed.Items {
 		var now = e.Date.Unix()
@@ -93,7 +93,7 @@ func updateFeed(url string, d int64) ([]*rss.Item, error) {
 
 func initFeed(url string) *rss.Feed {
 	var feed *rss.Feed
-	b, _ := storage.GetValue([]byte(".rss"), []byte(rss_prefix+url))
+	b, _ := storage.GetValue([]byte(pluginId), []byte(rss_prefix+url))
 	if b == nil {
 		return nil
 	}
@@ -108,7 +108,7 @@ func initFeed(url string) *rss.Feed {
 
 func getAllFeed(req *plugins.MessageRequest) []string {
 	var urls []string
-	storage.GetByPrefix([]byte(".rss"), []byte(rss_prefix), func(b1, b2 []byte) error {
+	storage.GetByPrefix([]byte(pluginId), []byte(rss_prefix), func(b1, b2 []byte) error {
 		urls = append(urls, string(b2))
 		return nil
 	})
@@ -121,7 +121,7 @@ func getAllFeed(req *plugins.MessageRequest) []string {
 		} else {
 			rss_url_distributor_key += fmt.Sprintf(":%v", req.Sender.Uin)
 		}
-		v, _ := storage.GetValue([]byte(".rss"), []byte(rss_url_distributor_key))
+		v, _ := storage.GetValue([]byte(pluginId), []byte(rss_url_distributor_key))
 		if v != nil {
 			feed, ok := feeds[url]
 			if ok {

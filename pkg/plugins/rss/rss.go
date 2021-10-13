@@ -43,7 +43,7 @@ func (w Plugin) PluginInfo() *plugins.PluginInfo {
 func (w Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 	v := msg.Elements[0]
 	field, ok := v.(*message.TextElement)
-	return ok && strings.HasPrefix(field.Content, ".rss")
+	return ok && strings.HasPrefix(field.Content, ".feed")
 }
 
 type rssReq struct {
@@ -61,7 +61,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		}
 	}
 	req := rssReq{}
-	commands, err := command.Parse(".rss", &req, strings.Split(context, " "))
+	commands, err := command.Parse(".feed", &req, strings.Split(context, " "))
 	if err != nil {
 		return nil, err
 	}
