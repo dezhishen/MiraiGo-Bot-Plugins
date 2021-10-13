@@ -121,6 +121,9 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 				}
 			}
 		}
+		if len(elements) == 0 {
+			elements = append(elements, message.NewText("暂无更新"))
+		}
 	}
 	return &plugins.MessageResponse{
 		Elements: elements,
