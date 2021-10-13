@@ -221,17 +221,15 @@ func items2Feeds(items []*rss.Item) []oneOfFeed {
 }
 func feed2MessageElements(oneOfFeed oneOfFeed, client *client.QQClient, messageType string, code int64) ([]message.IMessageElement, error) {
 	var messageElement []message.IMessageElement
+	messageElement = append(messageElement, message.NewText(oneOfFeed.Title+"\n"))
 	if messageType == "group" {
-		sendingMessage := &message.SendingMessage{}
-		sendingMessage.Append(message.NewText(oneOfFeed.Title + "\n"))
+		// sendingMessage := &message.SendingMessage{}
 		if oneOfFeed.CoverByte != nil {
 			image, _ := client.UploadGroupImage(code, bytes.NewReader(oneOfFeed.CoverByte))
 			messageElement = append(messageElement, image)
 		}
 		messageElement = append(messageElement, message.NewText(oneOfFeed.Link))
 	} else {
-		sendingMessage := &message.SendingMessage{}
-		sendingMessage.Append(message.NewText(oneOfFeed.Title + "\n"))
 		if oneOfFeed.CoverByte != nil {
 			image, _ := client.UploadPrivateImage(code, bytes.NewReader(oneOfFeed.CoverByte))
 			messageElement = append(messageElement, image)
