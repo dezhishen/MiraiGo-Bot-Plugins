@@ -108,9 +108,11 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 			feeds := items2Feeds(items)
 			for _, f := range feeds {
 				if request.MessageType == plugins.GroupMessage {
-					elements, _ = feed2MessageElements(f, request.QQClient, "group", request.GroupCode)
+					telements, _ := feed2MessageElements(f, request.QQClient, "group", request.GroupCode)
+					elements = append(elements, telements...)
 				} else {
-					elements, _ = feed2MessageElements(f, request.QQClient, "private", request.Sender.Uin)
+					telements, _ := feed2MessageElements(f, request.QQClient, "private", request.Sender.Uin)
+					elements = append(elements, telements...)
 				}
 				if err != nil {
 					return nil, err
