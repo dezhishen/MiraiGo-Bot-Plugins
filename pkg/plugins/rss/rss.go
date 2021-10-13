@@ -111,19 +111,23 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 			for _, f := range feeds {
 				if request.MessageType == plugins.GroupMessage {
 					telements, _ := feed2MessageElements(f, request.QQClient, "group", request.GroupCode)
-					elements = append(elements, telements...)
+					request.QQClient.SendGroupMessage(request.GroupCode, &message.SendingMessage{
+						Elements: telements,
+					})
 				} else {
 					telements, _ := feed2MessageElements(f, request.QQClient, "private", request.Sender.Uin)
-					elements = append(elements, telements...)
+					request.QQClient.SendPrivateMessage(request.Sender.Uin, &message.SendingMessage{
+						Elements: telements,
+					})
 				}
 				if err != nil {
 					return nil, err
 				}
 			}
 		}
-		if len(elements) == 0 {
-			elements = append(elements, message.NewText("暂无更新"))
-		}
+		// if len(elements) == 0 {
+		// 	elements = append(elements, message.NewText("暂无更新"))
+		// }
 	}
 	return &plugins.MessageResponse{
 		Elements: elements,
@@ -141,10 +145,10 @@ type info struct {
 	Code int64  `json:"code"`
 }
 type oneOfFeed struct {
-	Title     string
-	Link      string
-	CoverSrc  string
-	CoverByte []byte
+	Title       string
+	Link        string
+	Images      []string
+	ImagesBytes [][]byte
 }
 
 // Run 回调
@@ -210,12 +214,12 @@ func items2Feeds(items []*rss.Item) []oneOfFeed {
 		}
 		images := doc.Find("img")
 		if images != nil && len(images.Nodes) > 0 {
-			coverSrc, exists := goquery.NewDocumentFromNode(images.Nodes[0]).Attr("src")
+			src, exists := goquery.NewDocumentFromNode(images.Nodes[0]).Attr("src")
 			if exists {
-				e.CoverSrc = coverSrc
-				r, _ := http.DefaultClient.Get(coverSrc)
+				e.Images = append(e.Images, src)
+				r, _ := http.DefaultClient.Get(src)
 				content, _ := ioutil.ReadAll(r.Body)
-				e.CoverByte = content
+				e.ImagesBytes = append(e.ImagesBytes, content)
 			}
 		}
 		feeds = append(feeds, e)
@@ -225,19 +229,16 @@ func items2Feeds(items []*rss.Item) []oneOfFeed {
 func feed2MessageElements(oneOfFeed oneOfFeed, client *client.QQClient, messageType string, code int64) ([]message.IMessageElement, error) {
 	var messageElement []message.IMessageElement
 	messageElement = append(messageElement, message.NewText(oneOfFeed.Title+"\n"))
-	if messageType == "group" {
-		// sendingMessage := &message.SendingMessage{}
-		if oneOfFeed.CoverByte != nil {
-			image, _ := client.UploadGroupImage(code, bytes.NewReader(oneOfFeed.CoverByte))
+	messageElement = append(messageElement, message.NewText(oneOfFeed.Link))
+	for _, b := range oneOfFeed.ImagesBytes {
+		if messageType == "group" {
+			// sendingMessage := &message.SendingMessage{}
+			image, _ := client.UploadGroupImage(code, bytes.NewReader(b))
+			messageElement = append(messageElement, image)
+		} else {
+			image, _ := client.UploadPrivateImage(code, bytes.NewReader(b))
 			messageElement = append(messageElement, image)
 		}
-		messageElement = append(messageElement, message.NewText(oneOfFeed.Link))
-	} else {
-		if oneOfFeed.CoverByte != nil {
-			image, _ := client.UploadPrivateImage(code, bytes.NewReader(oneOfFeed.CoverByte))
-			messageElement = append(messageElement, image)
-		}
-		messageElement = append(messageElement, message.NewText(oneOfFeed.Link))
 	}
 	return messageElement, nil
 }
