@@ -221,13 +221,16 @@ func items2Feeds(items []*rss.Item) []oneOfFeed {
 		}
 		images := doc.Find("img")
 		if images != nil && len(images.Nodes) > 0 {
-			src, exists := goquery.NewDocumentFromNode(images.Nodes[0]).Attr("src")
-			if exists {
-				e.Images = append(e.Images, src)
-				r, _ := http.DefaultClient.Get(src)
-				content, _ := ioutil.ReadAll(r.Body)
-				e.ImagesBytes = append(e.ImagesBytes, content)
+			for _, node := range images.Nodes {
+				src, exists := goquery.NewDocumentFromNode(node).Attr("src")
+				if exists {
+					e.Images = append(e.Images, src)
+					r, _ := http.DefaultClient.Get(src)
+					content, _ := ioutil.ReadAll(r.Body)
+					e.ImagesBytes = append(e.ImagesBytes, content)
+				}
 			}
+
 		}
 		feeds = append(feeds, e)
 	}
