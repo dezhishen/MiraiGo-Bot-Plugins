@@ -108,26 +108,33 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 				return nil, errors.New("更新失败" + err.Error())
 			}
 			feeds := items2Feeds(items)
+			flag := false
 			for _, f := range feeds {
 				if request.MessageType == plugins.GroupMessage {
 					telements, _ := feed2MessageElements(f, request.QQClient, "group", request.GroupCode)
-					request.QQClient.SendGroupMessage(request.GroupCode, &message.SendingMessage{
-						Elements: telements,
-					})
+					if len(telements) > 0 {
+						flag = true
+						request.QQClient.SendGroupMessage(request.GroupCode, &message.SendingMessage{
+							Elements: telements,
+						})
+					}
 				} else {
 					telements, _ := feed2MessageElements(f, request.QQClient, "private", request.Sender.Uin)
-					request.QQClient.SendPrivateMessage(request.Sender.Uin, &message.SendingMessage{
-						Elements: telements,
-					})
+					if len(telements) > 0 {
+						flag = true
+						request.QQClient.SendPrivateMessage(request.Sender.Uin, &message.SendingMessage{
+							Elements: telements,
+						})
+					}
 				}
 				if err != nil {
 					return nil, err
 				}
 			}
+			if !flag {
+				elements = append(elements, message.NewText("暂无更新"))
+			}
 		}
-		// if len(elements) == 0 {
-		// 	elements = append(elements, message.NewText("暂无更新"))
-		// }
 	}
 	return &plugins.MessageResponse{
 		Elements: elements,
