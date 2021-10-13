@@ -12,7 +12,6 @@ import (
 
 var rss_prefix string = "rss.url:"
 var rss_url_distributor string = "rss-url.distributor:"
-var rss_url_date string = "rss-url.date:"
 
 var feeds = make(map[string]*rss.Feed)
 
@@ -68,7 +67,7 @@ func getFeed(url string) (*rss.Feed, bool, error) {
 	return feed, ok, nil
 }
 
-func updateFeed(url string) ([]*rss.Item, error) {
+func updateFeed(url string, d int64) ([]*rss.Item, error) {
 	logger.Infof("开始抓取更新:%s", url)
 	feed, ok, err := getFeed(url)
 	if err != nil {
@@ -78,20 +77,15 @@ func updateFeed(url string) ([]*rss.Item, error) {
 		feed.Update()
 	}
 	var results []*rss.Item
-	lastDateByte, _ := storage.GetValue([]byte(".rss"), []byte(rss_url_date+url))
-	lastDate := storage.BytesToInt(lastDateByte)
-	max := lastDate
+	// lastDateByte, _ := storage.GetValue([]byte(".rss"), []byte(rss_url_date+url))
+	lastDate := d
 	for _, e := range feed.Items {
-		var now = int(e.Date.Unix())
+		var now = e.Date.Unix()
 		if now <= lastDate {
 			continue
 		}
-		if int(now) > max {
-			max = int(now)
-		}
 		results = append(results, e)
 	}
-	storage.Put([]byte(".rss"), []byte(rss_url_date+url), storage.IntToBytes(max))
 	logger.Infof("数量:%s", len(results))
 	logger.Infof("结束更新:%s", url)
 	return results, nil

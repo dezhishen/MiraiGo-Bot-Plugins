@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/Logiase/MiraiGo-Template/bot"
 	"github.com/Mrs4s/MiraiGo/client"
@@ -99,9 +100,10 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 			elements = append(elements, message.NewText("当前无订阅"))
 		}
 	} else if req.Event == "update" {
+		now := int64(time.Now().Unix()%900) * 900
 		for i := 1; i < len(commands); i++ {
 			url := commands[i]
-			items, err := updateFeed(url)
+			items, err := updateFeed(url, now)
 			if err != nil {
 				return nil, errors.New("更新失败" + err.Error())
 			}
@@ -152,9 +154,9 @@ func (t Plugin) Run(bot *bot.Bot) error {
 		urls = append(urls, url)
 		return nil
 	})
-
+	theDate := time.Now().Unix() - 15*60
 	for _, url := range urls {
-		items, _ := updateFeed(url)
+		items, _ := updateFeed(url, theDate)
 		feeds := items2Feeds(items)
 		var infos []info
 		storage.GetByPrefix([]byte(t.PluginInfo().ID), []byte(rss_url_distributor+url), func(key, v []byte) error {
