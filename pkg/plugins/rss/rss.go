@@ -42,6 +42,9 @@ func (w Plugin) PluginInfo() *plugins.PluginInfo {
 // IsFireEvent 是否触发
 func (w Plugin) IsFireEvent(msg *plugins.MessageRequest) bool {
 	v := msg.Elements[0]
+	for _, v := range msg.Elements {
+		logger.Infof("接收到消息 %s", v.Type())
+	}
 	field, ok := v.(*message.TextElement)
 	return ok && strings.HasPrefix(field.Content, ".feed")
 }
@@ -55,6 +58,7 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	var elements []message.IMessageElement
 	context := ""
 	for _, v := range request.Elements {
+		logger.Infof("接收到消息 %s", v.Type())
 		if v.Type() == message.Text {
 			field, _ := v.(*message.TextElement)
 			context += (field.Content)
