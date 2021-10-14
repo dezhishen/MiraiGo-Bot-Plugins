@@ -65,7 +65,7 @@ func init() {
 }
 
 func getWeather(localtion string) ([]byte, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://wttr.in/~%v.png?background=968136&p&lang=zh", localtion), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://wttr.in/~%v.png?1&background=968136&p&lang=zh", localtion), nil)
 	if err != nil {
 		return nil, err
 	}
