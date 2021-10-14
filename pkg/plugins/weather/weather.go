@@ -49,14 +49,17 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	if err != nil {
 		return nil, err
 	}
+	var imageErr error
+	var image message.IMessageElement
 	if request.MessageType == "group" {
-		// sendingMessage := &message.SendingMessage{}
-		image, _ := request.QQClient.UploadGroupImage(request.GroupCode, bytes.NewReader(resp))
-		result.Elements[0] = image
+		image, imageErr = request.QQClient.UploadGroupImage(request.GroupCode, bytes.NewReader(resp))
 	} else {
-		image, _ := request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(resp))
-		result.Elements[0] = image
+		image, imageErr = request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(resp))
 	}
+	if imageErr != nil {
+		return nil, imageErr
+	}
+	result.Elements[0] = image
 	return result, nil
 }
 
