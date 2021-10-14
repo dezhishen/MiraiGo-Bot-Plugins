@@ -2,18 +2,15 @@ package rss
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
-	"github.com/SlyMarbo/rss"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/plugins"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/storage"
+	"github.com/mmcdole/gofeed"
 )
 
 var rss_prefix string = "rss.url:"
 var rss_url_distributor string = "rss-url.distributor:"
-
-var feeds = make(map[string]*rss.Feed)
 
 func listenFeed(url string, req *plugins.MessageRequest) error {
 	rss_url_distributor_key :=
@@ -56,32 +53,29 @@ func unListenFeed(url string, req *plugins.MessageRequest) error {
 	return nil
 }
 
-func getFeed(url string) (*rss.Feed, bool, error) {
-	feed, ok := feeds[url]
-	if !ok {
-		feed = initFeed(url)
-		if feed == nil {
-			return nil, false, errors.New("未订阅的地址")
-		}
+func getFeed(url string) (*gofeed.Feed, error) {
+	fp := gofeed.NewParser()
+	feed, err := fp.ParseURL(url)
+	if err != nil {
+		logger.Infof("抓取Feed时发生异常:%v", url)
 	}
-	return feed, ok, nil
+	return feed, err
 }
 
-func updateFeed(url string, d int64) ([]*rss.Item, error) {
+func updateFeed(url string, d int64) ([]*gofeed.Item, error) {
 	logger.Infof("开始抓取更新:%s", url)
-	feed, ok, err := getFeed(url)
+	feed, err := getFeed(url)
 	if err != nil {
 		return nil, err
 	}
-	if ok {
-		feed.Update()
-	}
-	var results []*rss.Item
+	var results []*gofeed.Item
 	// lastDateByte, _ := storage.GetValue([]byte(pluginId), []byte(rss_url_date+url))
-	lastDate := d
+	if d >= feed.UpdatedParsed.Unix() {
+		return results, nil
+	}
 	for _, e := range feed.Items {
-		var now = e.Date.Unix()
-		if now <= lastDate {
+		var now = e.PublishedParsed.Unix()
+		if now <= d {
 			continue
 		}
 		results = append(results, e)
@@ -89,21 +83,6 @@ func updateFeed(url string, d int64) ([]*rss.Item, error) {
 	logger.Infof("数量:%s", len(results))
 	logger.Infof("结束更新:%s", url)
 	return results, nil
-}
-
-func initFeed(url string) *rss.Feed {
-	var feed *rss.Feed
-	b, _ := storage.GetValue([]byte(pluginId), []byte(rss_prefix+url))
-	if b == nil {
-		return nil
-	}
-	var err error
-	feed, err = rss.Fetch(url)
-	if err != nil {
-		logger.Infof("初始化feed流,发生异常[%s],url:[%s]", err.Error(), url)
-		return nil
-	}
-	return feed
 }
 
 func getAllFeed(req *plugins.MessageRequest) []string {
@@ -123,12 +102,7 @@ func getAllFeed(req *plugins.MessageRequest) []string {
 		}
 		v, _ := storage.GetValue([]byte(pluginId), []byte(rss_url_distributor_key))
 		if v != nil {
-			feed, ok := feeds[url]
-			if ok {
-				result = append(result, feed.Title+":"+url)
-			} else {
-				result = append(result, url)
-			}
+			result = append(result, url)
 		}
 	}
 	return result

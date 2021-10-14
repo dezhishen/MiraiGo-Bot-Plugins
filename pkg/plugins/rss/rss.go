@@ -13,10 +13,10 @@ import (
 	"github.com/Mrs4s/MiraiGo/client"
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/PuerkitoBio/goquery"
-	"github.com/SlyMarbo/rss"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/command"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/plugins"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/storage"
+	"github.com/mmcdole/gofeed"
 	"github.com/sirupsen/logrus"
 )
 
@@ -212,10 +212,10 @@ func (t Plugin) Cron() string {
 	return cron
 }
 
-func items2Feeds(items []*rss.Item) []oneOfFeed {
+func items2Feeds(items []*gofeed.Item) []oneOfFeed {
 	var feeds []oneOfFeed
 	for _, feedItem := range items {
-		doc, err := goquery.NewDocumentFromReader(strings.NewReader(feedItem.Summary))
+		doc, err := goquery.NewDocumentFromReader(strings.NewReader(feedItem.Content))
 		if err != nil {
 			continue
 		}
