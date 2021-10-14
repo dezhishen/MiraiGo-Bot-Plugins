@@ -1,8 +1,6 @@
 package weather
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -10,7 +8,6 @@ import (
 
 	"github.com/Mrs4s/MiraiGo/message"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/plugins"
-	"github.com/dezhiShen/MiraiGo-Bot/tools"
 )
 
 // Plugin 天气插件
@@ -46,45 +43,33 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	v := request.Elements[0]
 	field, _ := v.(*message.TextElement)
 	context := field.Content
-	params := strings.Split(context, " ")
-	if len(params) < 3 {
-		return nil, errors.New("请至少输入省份和城市")
-	}
-	if len(params) == 3 {
-		params = append(params, "")
-	}
-	uri := fmt.Sprintf("https://wis.qq.com/weather/common?source=pc&weather_type=observe&province=%v&city=%v&county=%v", params[1], params[2], params[3])
-	r, err := http.DefaultClient.Get(uri)
+	localtion := strings.TrimSpace(strings.ReplaceAll(context, ".weather", ""))
+	resp, err := getWeather(localtion)
 	if err != nil {
 		return nil, err
 	}
-	robots, err := ioutil.ReadAll(r.Body)
-	r.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-	resp := string(robots)
-	if resp == "" {
-		return nil, nil
-	}
-	var mapResult map[string]interface{}
-	err = json.Unmarshal([]byte(resp), &mapResult)
-	if err != nil {
-		return nil, err
-	}
-	flatMap := tools.FlatMap("", mapResult)
-	txt := fmt.Sprintf(
-		"%v%v%v现在天气是%v,温度为%v",
-		params[1],
-		params[2],
-		params[3],
-		flatMap["data.observe.weather_short"],
-		flatMap["data.observe.degree"],
-	)
-	result.Elements[0] = message.NewText(txt)
+	result.Elements[0] = message.NewText(resp)
 	return result, nil
 }
 
 func init() {
 	plugins.RegisterOnMessagePlugin(Plugin{})
+}
+
+func getWeather(localtion string) (string, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://wttr.in/~%v?0&AT", localtion), nil)
+	if err != nil {
+		return "", err
+	}
+	r, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer r.Body.Close()
+	robots, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return "", err
+	}
+	resp := string(robots)
+	return resp, nil
 }
