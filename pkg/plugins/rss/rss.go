@@ -215,7 +215,7 @@ func (t Plugin) Cron() string {
 func items2Feeds(items []*gofeed.Item) []oneOfFeed {
 	var feeds []oneOfFeed
 	for _, feedItem := range items {
-		doc, err := goquery.NewDocumentFromReader(strings.NewReader(feedItem.Content))
+		doc, err := goquery.NewDocumentFromReader(strings.NewReader(feedItem.Description))
 		if err != nil {
 			continue
 		}
