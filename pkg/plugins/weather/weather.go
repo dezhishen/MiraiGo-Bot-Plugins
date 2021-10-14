@@ -1,6 +1,7 @@
 package weather
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -48,7 +49,14 @@ func (w Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	if err != nil {
 		return nil, err
 	}
-	result.Elements[0] = message.NewText(resp)
+	if request.MessageType == "group" {
+		// sendingMessage := &message.SendingMessage{}
+		image, _ := request.QQClient.UploadGroupImage(request.GroupCode, bytes.NewReader(resp))
+		result.Elements[0] = image
+	} else {
+		image, _ := request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(resp))
+		result.Elements[0] = image
+	}
 	return result, nil
 }
 
@@ -56,20 +64,19 @@ func init() {
 	plugins.RegisterOnMessagePlugin(Plugin{})
 }
 
-func getWeather(localtion string) (string, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://wttr.in/~%v?0&AT&lang=zh", localtion), nil)
+func getWeather(localtion string) ([]byte, error) {
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://wttr.in/~%v.png?background=968136&p&lang=zh", localtion), nil)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	r, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer r.Body.Close()
 	robots, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	resp := string(robots)
-	return resp, nil
+	return robots, nil
 }
