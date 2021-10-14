@@ -57,7 +57,7 @@ func init() {
 }
 
 func getWeather(localtion string) (string, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://wttr.in/~%v?0&AT", localtion), nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://wttr.in/~%v?0&AT&lang=zh", localtion), nil)
 	if err != nil {
 		return "", err
 	}
