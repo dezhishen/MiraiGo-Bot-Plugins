@@ -2,6 +2,7 @@ package rss
 
 import (
 	"testing"
+	"time"
 )
 
 func Test_getFeed(t *testing.T) {
@@ -10,9 +11,9 @@ func Test_getFeed(t *testing.T) {
 	// 	panic(err)
 	// }
 	// println(feed1)
-	// feed2, err := getFeed("https://nitter.namazso.eu/212moving/rss")
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// print(feed2)
+	feed2, err := updateFeed("https://nitter.namazso.eu/212moving/rss", time.Now().Unix())
+	if err != nil {
+		panic(err)
+	}
+	print(feed2)
 }
