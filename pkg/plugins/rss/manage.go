@@ -70,7 +70,7 @@ func updateFeed(url string, d int64) ([]*gofeed.Item, error) {
 	}
 	var results []*gofeed.Item
 	// lastDateByte, _ := storage.GetValue([]byte(pluginId), []byte(rss_url_date+url))
-	if d >= feed.UpdatedParsed.Unix() {
+	if d >= feed.PublishedParsed.Unix() {
 		return results, nil
 	}
 	for _, e := range feed.Items {
@@ -80,7 +80,7 @@ func updateFeed(url string, d int64) ([]*gofeed.Item, error) {
 		}
 		results = append(results, e)
 	}
-	logger.Infof("数量:%s", len(results))
+	logger.Infof("数量:%v", len(results))
 	logger.Infof("结束更新:%s", url)
 	return results, nil
 }
