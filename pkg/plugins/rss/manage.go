@@ -74,7 +74,7 @@ func updateFeed(url string, d int64) ([]*gofeed.Item, error) {
 	if feedLastUpdatedDate == nil {
 		feedLastUpdatedDate = feed.UpdatedParsed
 	}
-	if d >= feedLastUpdatedDate.Unix() {
+	if feedLastUpdatedDate != nil && d >= feedLastUpdatedDate.Unix() {
 		return results, nil
 	}
 	for _, e := range feed.Items {
