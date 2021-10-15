@@ -70,12 +70,19 @@ func updateFeed(url string, d int64) ([]*gofeed.Item, error) {
 	}
 	var results []*gofeed.Item
 	// lastDateByte, _ := storage.GetValue([]byte(pluginId), []byte(rss_url_date+url))
-	if d >= feed.PublishedParsed.Unix() {
+	feedLastUpdatedDate := feed.PublishedParsed
+	if feedLastUpdatedDate == nil {
+		feedLastUpdatedDate = feed.UpdatedParsed
+	}
+	if d >= feedLastUpdatedDate.Unix() {
 		return results, nil
 	}
 	for _, e := range feed.Items {
-		var now = e.PublishedParsed.Unix()
-		if now <= d {
+		itemLastUpdatedDate := feed.PublishedParsed
+		if itemLastUpdatedDate == nil {
+			itemLastUpdatedDate = feed.UpdatedParsed
+		}
+		if itemLastUpdatedDate.Unix() <= d {
 			continue
 		}
 		results = append(results, e)
