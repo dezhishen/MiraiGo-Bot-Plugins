@@ -75,9 +75,13 @@ func updateFeed(url string, d int64) ([]*gofeed.Item, error) {
 			itemLastUpdatedDate = e.UpdatedParsed
 		}
 		logger.Infof("推文时间:%v", itemLastUpdatedDate.Local().Format("2006-01-02 15:04:05"))
-		if itemLastUpdatedDate.Local().Unix() <= d && i > 0 {
+		if itemLastUpdatedDate.Local().Unix() <= d {
 			//>0避免置顶的影响
-			break
+			if i > 0 {
+				break
+			} else {
+				continue
+			}
 		}
 		results = append(results, e)
 	}
