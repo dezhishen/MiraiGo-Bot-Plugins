@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/config"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/almanac"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/calendar"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/haimage"
@@ -36,5 +37,6 @@ import (
 )
 
 func main() {
+	config.InitLog()
 	server.Start()
 }
