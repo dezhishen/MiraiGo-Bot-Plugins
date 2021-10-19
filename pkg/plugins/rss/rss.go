@@ -168,7 +168,9 @@ func (t Plugin) Run(bot *bot.Bot) error {
 		urls = append(urls, url)
 		return nil
 	})
-	theDate := time.Now().Unix() - 15*60
+	now := time.Now()
+	logger.Infof("开始更新，更新时间:%v", now.Format("2006-01-02 15:04:05"))
+	theDate := now.Unix() - 15*60
 	for _, url := range urls {
 		items, _ := updateFeed(url, theDate)
 		feeds := items2Feeds(items)
@@ -243,10 +245,18 @@ func feed2MessageElements(oneOfFeed oneOfFeed, client *client.QQClient, messageT
 	for _, b := range oneOfFeed.ImagesBytes {
 		if messageType == "group" {
 			// sendingMessage := &message.SendingMessage{}
-			image, _ := client.UploadGroupImage(code, bytes.NewReader(b))
+			image, err := client.UploadGroupImage(code, bytes.NewReader(b))
+			if err != nil {
+				logger.Error("上传图片发生异常")
+				continue
+			}
 			messageElement = append(messageElement, image)
 		} else {
-			image, _ := client.UploadPrivateImage(code, bytes.NewReader(b))
+			image, err := client.UploadPrivateImage(code, bytes.NewReader(b))
+			if err != nil {
+				logger.Error("上传图片发生异常")
+				continue
+			}
 			messageElement = append(messageElement, image)
 		}
 	}
