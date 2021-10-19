@@ -69,12 +69,14 @@ func updateFeed(url string, d int64) ([]*gofeed.Item, error) {
 		return nil, err
 	}
 	var results []*gofeed.Item
-	for _, e := range feed.Items {
+	for i, e := range feed.Items {
 		itemLastUpdatedDate := e.PublishedParsed
 		if itemLastUpdatedDate == nil {
 			itemLastUpdatedDate = e.UpdatedParsed
 		}
-		if itemLastUpdatedDate.Unix() <= d {
+		logger.Infof("推文时间:%v", itemLastUpdatedDate.Local().Format("2006-01-02 15:04:05"))
+		if itemLastUpdatedDate.Local().Unix() <= d && i > 0 {
+			//>0避免置顶的影响
 			break
 		}
 		results = append(results, e)

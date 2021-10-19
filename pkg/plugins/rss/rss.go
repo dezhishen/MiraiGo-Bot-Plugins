@@ -168,7 +168,7 @@ func (t Plugin) Run(bot *bot.Bot) error {
 		urls = append(urls, url)
 		return nil
 	})
-	now := time.Now()
+	now := time.Now().Local()
 	logger.Infof("开始更新，更新时间:%v", now.Format("2006-01-02 15:04:05"))
 	theDate := now.Unix() - 15*60
 	for _, url := range urls {
