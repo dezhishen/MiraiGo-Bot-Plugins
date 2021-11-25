@@ -20,7 +20,7 @@ MiraiGo-Bot插件库
 [狗狗图](./pkg/plugins/thedog)|`.thedog`/`.dog` 随机发送一条狗狗图
 ~~[舔狗语录](./pkg/plugins/tiangou)~~|`.tg` 随机发送一条舔狗语录(重复率较高),已停用
 [提醒](./pkg/plugins/tips)|`.tips 10:10 提示内容` 10:10时,@该发送群友+提示内容
-[天气](./pkg/plugins/weather)|`.weather 省份 城市 地区(可以不传)` 调用腾讯天气
+[天气](./pkg/plugins/weather)|`.weather 所在地` 调用 https://github.com/schachmat/wego
 ~~[微博监听](./pkg/plugins/weibolisten)~~|由于访问限制,暂时不可用
 [B站粉丝数查询](./pkg/plugins/bilifan)|`.bilifan UID` 发送该UID的粉丝数量
 [翻译插件](./pkg/plugins/translate)|`.tr test` 翻译文本<br> `.tr -f zh 三点多,先喝茶 -t yue`
