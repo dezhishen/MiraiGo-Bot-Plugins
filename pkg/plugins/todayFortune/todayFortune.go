@@ -50,10 +50,13 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	}
 
 	b, err := fortune.Draw(fortune.RandTheme(), result)
+	if err != nil {
+		return nil, err
+	}
 	dec := base64.NewDecoder(base64.StdEncoding, bytes.NewReader(b))
 	buf := &bytes.Buffer{}
 	buf.ReadFrom(dec)
-
+	retItem.Elements = append(retItem.Elements, message.NewText(request.GetNickName()+":"))
 	var image message.IMessageElement
 	if plugins.GroupMessage == request.MessageType {
 		image, err = request.QQClient.UploadGroupImage(request.GroupCode, bytes.NewReader(buf.Bytes()))
@@ -64,8 +67,7 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		print(err.Error())
 		return nil, err
 	}
-	retItem.Elements[0] = image
-
+	retItem.Elements = append(retItem.Elements, image)
 	return retItem, nil
 }
 
