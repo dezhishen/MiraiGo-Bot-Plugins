@@ -5,6 +5,7 @@ MiraiGo-Bot插件库
 ## 已实现
 名称|描述
 -|-
+[运势插件](./pkg/plugins/todayFortune)|`.tf` 随机运势,素材等来源[`https://github.com/FloatTech/Plugin-Fortune`](https://github.com/FloatTech/Plugin-Fortune),为了避免流量占用过多,素材复制至-> https://github.com/dezhishen/raw/tree/master/fortune
 [彩虹屁](./pkg/plugins/caihongpi)|`.chp` 随机发送一条彩虹屁
 [日历](./pkg/plugins/calendar)|`.calendar` 展示今日的日历(阳历,周几,阳历节日,农历,农历节日)<br>`.calendar Y/N` 启用/禁用定时(早6点)发送
 [毒鸡汤](./pkg/plugins/dujitang)|`.djt` 随机发送一条毒鸡汤

@@ -49,7 +49,7 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 		Elements: make([]message.IMessageElement, 1),
 	}
 
-	b, err := fortune.Draw("碧蓝航线", result)
+	b, err := fortune.Draw(fortune.RandTheme(), result)
 	dec := base64.NewDecoder(base64.StdEncoding, bytes.NewReader(b))
 	buf := &bytes.Buffer{}
 	buf.ReadFrom(dec)
