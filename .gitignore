@@ -355,7 +355,8 @@ plugin-storage.db.lock
 device.json
 application.yaml
 cmd/__debug_bin
+cmd/__debug_bin.exe
 scripts/deploy_docker_test.sh
 health
 jrrp
-fortune/运势签文.json
+fortune

@@ -1,11 +1,13 @@
 package fortune
 
 import (
+	"archive/zip"
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"image/jpeg"
+	"io"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -15,6 +17,7 @@ import (
 
 	"github.com/FloatTech/ZeroBot-Plugin/utils/math"
 	"github.com/fogleman/gg"
+	"github.com/sirupsen/logrus"
 )
 
 type FortuneResult struct {
@@ -22,9 +25,25 @@ type FortuneResult struct {
 	Content string `json:"content"`
 }
 
+var logger = logrus.WithField("bot-plugin", "fortune")
 var root = "./fortune"
 var site = "https://ghproxy.com/https://github.com/dezhishen/raw/blob/master/fortune"
-var table = [...]string{"车万", "DC4", "爱因斯坦", "星空列车", "樱云之恋", "富婆妹", "李清歌", "公主连结", "原神", "明日方舟", "碧蓝航线", "碧蓝幻想", "战双", "阴阳师"}
+var table = [...]string{
+	"车万",
+	"DC4",
+	"爱因斯坦",
+	"星空列车",
+	"樱云之恋",
+	"富婆妹",
+	"李清歌",
+	"公主连结",
+	"原神",
+	"明日方舟",
+	"碧蓝航线",
+	"碧蓝幻想",
+	"战双",
+	"阴阳师",
+}
 
 // @function randtext 随机选取签文
 // @param file 文件路径
@@ -60,14 +79,45 @@ func RandTheme() string {
 	return table[r]
 }
 
-// @function draw 绘制运势图
-// @param background 背景图片路径
+// @function getBackgroundByTheme 获取背景图片
+// @param theme 背景主体
+// @return 图片地址,错误信息
+func getBackgroundByTheme(theme string) (string, error) {
+	//如果文件夹不存在
+	dirPath := root + "/" + theme + "/"
+	if ok, _ := pathExists(dirPath); !ok {
+		path, err := getFile(theme + ".zip")
+		if err != nil {
+			return "", err
+		}
+		//解压
+		err = unpack(path, dirPath)
+		if err != nil {
+			return "", err
+		}
+	}
+	//获取文件夹下随机图片一张
+	// 生成种子
+	return randimage(dirPath, time.Now().UnixNano())
+}
+
+// @function Draw 绘制运势图
+// @param theme 背景主体
 // @param title 签名
 // @param text 签文
 // @return 错误信息
-func Draw(background string, fortuneResult *FortuneResult) ([]byte, error) {
+func Draw(theme string, fortuneResult *FortuneResult) ([]byte, error) {
 	// 加载背景
+	background, err := getBackgroundByTheme(theme)
+	if err != nil {
+		return nil, err
+	}
 	back, err := gg.LoadImage(background)
+	if err != nil {
+		return nil, err
+	}
+	//加载字体文件
+	fontPath, err := getFile("sakura.ttf")
 	if err != nil {
 		return nil, err
 	}
@@ -75,14 +125,14 @@ func Draw(background string, fortuneResult *FortuneResult) ([]byte, error) {
 	canvas.DrawImage(back, 0, 0)
 	// 写标题
 	canvas.SetRGB(1, 1, 1)
-	if err := canvas.LoadFontFace("C:\\Users\\zhsy\\Desktop\\"+"sakura.ttf", 45); err != nil {
+	if err := canvas.LoadFontFace(fontPath, 45); err != nil {
 		return nil, err
 	}
 	sw, _ := canvas.MeasureString(fortuneResult.Title)
 	canvas.DrawString(fortuneResult.Title, 140-sw/2, 112)
 	// 写正文
 	canvas.SetRGB(0, 0, 0)
-	if err := canvas.LoadFontFace("C:\\Users\\zhsy\\Desktop\\"+"sakura.ttf", 23); err != nil {
+	if err := canvas.LoadFontFace(fontPath, 23); err != nil {
 		return nil, err
 	}
 	tw, th := canvas.MeasureString("测")
@@ -162,7 +212,9 @@ func getFile(name string) (string, error) {
 }
 
 func downloadFile(name string) error {
-	r, err := http.DefaultClient.Get(getSiteUrl(name))
+	url := getSiteUrl(name)
+	logger.Info("下载文件..." + url)
+	r, err := http.DefaultClient.Get(url)
 	if err != nil {
 		return err
 	}
@@ -190,4 +242,57 @@ func init() {
 	if !exists {
 		os.Mkdir(root, 0777)
 	}
+}
+
+// @function unpack 解压资源包
+// @param tgt 压缩文件位置
+// @param dest 解压位置
+// @return 错误信息
+func unpack(tgt, dest string) error {
+	// 路径目录不存在则创建目录
+	if _, err := os.Stat(dest); err != nil && !os.IsExist(err) {
+		if err := os.MkdirAll(dest, 0755); err != nil {
+			panic(err)
+		}
+	}
+	reader, err := zip.OpenReader(tgt)
+	if err != nil {
+		return err
+	}
+	defer reader.Close()
+	// 遍历解压到文件
+	for _, file := range reader.File {
+		// 打开解压文件
+		rc, err := file.Open()
+		if err != nil {
+			return err
+		}
+		// 打开目标文件
+		w, err := os.OpenFile(dest+file.Name, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0644)
+		if err != nil {
+			rc.Close()
+			return err
+		}
+		// 复制到文件
+		_, err = io.Copy(w, rc)
+		rc.Close()
+		w.Close()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// @function randimage 随机选取文件夹下的文件
+// @param path 文件夹路径
+// @param seed 随机数种子
+// @return 文件路径 & 错误信息
+func randimage(path string, seed int64) (string, error) {
+	rd, err := ioutil.ReadDir(path)
+	if err != nil {
+		return "", err
+	}
+	rand.Seed(seed)
+	return path + rd[rand.Intn(len(rd))].Name(), nil
 }

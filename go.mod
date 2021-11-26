@@ -3,6 +3,7 @@ module github.com/dezhiShen/MiraiGo-Bot-Plugins
 go 1.16
 
 require (
+	github.com/FloatTech/ZeroBot-Plugin v1.2.0
 	github.com/Logiase/MiraiGo-Template v0.0.0-20210524064918-229c83f88d32
 	github.com/Mrs4s/MiraiGo v0.0.0-20210525010101-8f0cd9494d64
 	github.com/PuerkitoBio/goquery v1.7.1

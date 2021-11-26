@@ -31,8 +31,9 @@ import (
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/translate"
 
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/bilifan"
-	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/facesave"
+	// _ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/facesave"
 	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/rss"
+	_ "github.com/dezhiShen/MiraiGo-Bot-Plugins/pkg/plugins/todayFortune"
 	"github.com/dezhiShen/MiraiGo-Bot/pkg/server"
 )
 
