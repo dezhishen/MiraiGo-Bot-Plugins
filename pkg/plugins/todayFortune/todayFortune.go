@@ -1,6 +1,8 @@
 package todayFortune
 
 import (
+	"bytes"
+	"encoding/base64"
 	"strings"
 
 	"github.com/Mrs4s/MiraiGo/message"
@@ -42,8 +44,29 @@ func (p Plugin) OnMessageEvent(request *plugins.MessageRequest) (*plugins.Messag
 	if err != nil {
 		return nil, err
 	}
-	print(result.Title, result.Content)
-	return nil, nil
+
+	retItem := &plugins.MessageResponse{
+		Elements: make([]message.IMessageElement, 1),
+	}
+
+	b, err := fortune.Draw("C:\\Users\\zhsy\\Desktop\\test.png", result)
+	dec := base64.NewDecoder(base64.StdEncoding, bytes.NewReader(b))
+	buf := &bytes.Buffer{}
+	buf.ReadFrom(dec)
+
+	var image message.IMessageElement
+	if plugins.GroupMessage == request.MessageType {
+		image, err = request.QQClient.UploadGroupImage(request.GroupCode, bytes.NewReader(buf.Bytes()))
+	} else {
+		image, err = request.QQClient.UploadPrivateImage(request.Sender.Uin, bytes.NewReader(buf.Bytes()))
+	}
+	if err != nil {
+		print(err.Error())
+		return nil, err
+	}
+	retItem.Elements[0] = image
+
+	return retItem, nil
 }
 
 func init() {

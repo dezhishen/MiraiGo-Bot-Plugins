@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"image/jpeg"
 	"io/ioutil"
-	"math"
 	"math/rand"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/FloatTech/ZeroBot-Plugin/utils/math"
 	"github.com/fogleman/gg"
 )
 
@@ -24,6 +24,7 @@ type FortuneResult struct {
 
 var root = "./fortune"
 var site = "https://ghproxy.com/https://github.com/dezhishen/raw/blob/master/fortune"
+var table = [...]string{"车万", "DC4", "爱因斯坦", "星空列车", "樱云之恋", "富婆妹", "李清歌", "公主连结", "原神", "明日方舟", "碧蓝航线", "碧蓝幻想", "战双", "阴阳师"}
 
 // @function randtext 随机选取签文
 // @param file 文件路径
@@ -52,6 +53,13 @@ func Randtext() (*FortuneResult, error) {
 	}, nil
 }
 
+func RandTheme() string {
+	seed := time.Now().UnixNano()
+	rand.Seed(seed)
+	r := rand.Intn(len(table))
+	return table[r]
+}
+
 // @function draw 绘制运势图
 // @param background 背景图片路径
 // @param title 签名
@@ -67,16 +75,16 @@ func Draw(background string, fortuneResult *FortuneResult) ([]byte, error) {
 	canvas.DrawImage(back, 0, 0)
 	// 写标题
 	canvas.SetRGB(1, 1, 1)
-	// if err := canvas.LoadFontFace(base+"sakura.ttf", 45); err != nil {
-	// 	return nil, err
-	// }
+	if err := canvas.LoadFontFace("C:\\Users\\zhsy\\Desktop\\"+"sakura.ttf", 45); err != nil {
+		return nil, err
+	}
 	sw, _ := canvas.MeasureString(fortuneResult.Title)
 	canvas.DrawString(fortuneResult.Title, 140-sw/2, 112)
 	// 写正文
 	canvas.SetRGB(0, 0, 0)
-	// if err := canvas.LoadFontFace(base+"sakura.ttf", 23); err != nil {
-	// 	return nil, err
-	// }
+	if err := canvas.LoadFontFace("C:\\Users\\zhsy\\Desktop\\"+"sakura.ttf", 23); err != nil {
+		return nil, err
+	}
 	tw, th := canvas.MeasureString("测")
 	tw, th = tw+10, th+10
 	r := []rune(fortuneResult.Content)
@@ -85,9 +93,7 @@ func Draw(background string, fortuneResult *FortuneResult) ([]byte, error) {
 	default:
 		for i, o := range r {
 			xnow := rowsnum(i+1, 9)
-
-			offIt := (float64)(len(r) - (xnow-1)*9)
-			ysum := (int)(math.Min(offIt, 9))
+			ysum := math.Min(len(r)-(xnow-1)*9, 9)
 			ynow := i%9 + 1
 			canvas.DrawString(string(o), -offest(xsum, xnow, tw)+115, offest(ysum, ynow, th)+320.0)
 		}
@@ -95,10 +101,7 @@ func Draw(background string, fortuneResult *FortuneResult) ([]byte, error) {
 		div := rowsnum(len(r), 2)
 		for i, o := range r {
 			xnow := rowsnum(i+1, div)
-
-			offIt := (float64)(len(r) - (xnow-1)*div)
-			flt64Div := (float64)(div)
-			ysum := (int)(math.Min(offIt, flt64Div))
+			ysum := math.Min(len(r)-(xnow-1)*div, div)
 			ynow := i%div + 1
 			switch xnow {
 			case 1:
