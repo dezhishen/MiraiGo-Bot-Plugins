@@ -23,7 +23,7 @@ type FortuneResult struct {
 }
 
 var root = "./fortune"
-var site = "https://pan.dihe.moe/fortune"
+var site = "https://ghproxy.com/https://github.com/dezhishen/raw/blob/master/fortune"
 
 // @function randtext 随机选取签文
 // @param file 文件路径
